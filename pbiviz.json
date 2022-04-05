@@ -1,1 +1,25 @@
-{"visual":{"name":"targetChart","displayName":"targetChart","guid":"targetChart9D5E6D3E19A24BA491DA372F50F53735","visualClassName":"Visual","version":"1.0.0","description":"","supportUrl":"","gitHubUrl":""},"apiVersion":"3.8.0","author":{"name":"","email":""},"assets":{"icon":"assets/icon.png"},"externalJS":null,"style":"style/visual.less","capabilities":"capabilities.json","dependencies":null,"stringResources":[]}
+{
+    "visual": {
+        "name": "targetChart",
+        "displayName": "targetChart",
+        "guid": "targetChart9D5E6D3E19A24BA491DA372F50F53735",
+        "visualClassName": "Visual",
+        "version": "1.0.0",
+        "description": "Custom chart developed to display actual values versus forecasted or target values.",
+        "supportUrl": "https://github.com/JesseXia-Rogers/targetChart",
+        "gitHubUrl": "https://github.com/JesseXia-Rogers/targetChart"
+    },
+    "apiVersion": "3.8.0",
+    "author": {
+        "name": "Jesse Xia",
+        "email": "jesse.xia@rci.rogers.ca"
+    },
+    "assets": {
+        "icon": "assets/icon.png"
+    },
+    "externalJS": null,
+    "style": "style/visual.less",
+    "capabilities": "capabilities.json",
+    "dependencies": null,
+    "stringResources": []
+}

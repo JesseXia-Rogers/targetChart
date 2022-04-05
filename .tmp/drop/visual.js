@@ -333,7 +333,6 @@ class D3Visual {
                     }
                     return val;
                 });
-                // sets x pos of label based on x-axis value + widths of bars before + 1/2 current bar width
                 barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
                     .attr('y', data => height - (y(data[0]) - y(data[1])) / 2);
             }
@@ -358,11 +357,7 @@ class D3Visual {
                                     .attr('height', DATA_LABEL_SETTINGS.SumLabelFontSize + bgPadding / 2)
                                     .attr('fill', DATA_LABEL_SETTINGS.SumLabelBackgroundColor)
                                     .attr('y', y(val) - 18)
-                                    // x = bar group xpos + serie xpos - half rect width
-                                    .attr('x', x(data.data.sharedAxis.toString())
-                                    + x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length * idx
-                                    + x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length / 2
-                                    - sumBgWidth / 2);
+                                    .attr('x', x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
                             }
                             // text
                             svg.append('text')
@@ -373,10 +368,7 @@ class D3Visual {
                                 .attr('text-anchor', 'middle')
                                 .attr('dominant-baseline', 'middle')
                                 .attr('y', y(val) - 10)
-                                // x = bar group xpos + serie xpos + half of bar width
-                                .attr('x', x(data.data.sharedAxis.toString())
-                                + x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length * idx
-                                + x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length / 2)
+                                .attr('x', x(data.data.sharedAxis.toString()) + x.bandwidth() / 2)
                                 .text(text);
                         }
                     }
@@ -943,9 +935,9 @@ class DataLabelSettings {
         this.SumLabelColor = '#000000';
         this.SumLabelBackgroundColor = '#ffffff';
         this.SumLabelDisplayTolerance = 10;
-        this.SumLabelToggle = false;
+        this.SumLabelToggle = true;
         this.SumLabelBgToggle = false;
-        this.BarLabelToggle = false;
+        this.BarLabelToggle = true;
         this.BarLabelColor = '#000000';
         this.BarLabelFontSize = 10;
         this.BarLabelDisplayTolerance = 15;
@@ -963,8 +955,8 @@ class LegendSettings {
 }
 class GrowthSettings {
     constructor() {
-        this.TogglePrimaryIndicators = false;
-        this.ToggleSecondaryIndicator = false;
+        this.TogglePrimaryIndicators = true;
+        this.ToggleSecondaryIndicator = true;
         this.PrimarySelector = '';
         this.SecondarySelector = '';
     }

@@ -298,7 +298,7 @@ export class D3Visual {
 
             } else if (LEGEND_SETTINGS.LegendPosition == 'left') {
                 // adds margin for legend
-                svg.style('margin-left', `${legendWidth + 40}px`)
+                svg.style('margin-left', `${legendWidth + 40}px`);
             }
         }
 
@@ -405,7 +405,6 @@ export class D3Visual {
                     return val;
                 });
 
-                // sets x pos of label based on x-axis value + widths of bars before + 1/2 current bar width
                 barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
                     .attr('y', data => height - (y(data[0]) - y(data[1])) / 2);
             }
@@ -413,8 +412,8 @@ export class D3Visual {
 
         // show summation label
         if (DATA_LABEL_SETTINGS.SumLabelToggle) {
-
             stackData.forEach((serie, idx) => {
+                
                 serie.forEach(data => {
                     let val = data[1] - data[0];
 
@@ -435,11 +434,7 @@ export class D3Visual {
                                     .attr('height', DATA_LABEL_SETTINGS.SumLabelFontSize + bgPadding / 2)
                                     .attr('fill', DATA_LABEL_SETTINGS.SumLabelBackgroundColor)
                                     .attr('y', y(val) - 18)
-                                    // x = bar group xpos + serie xpos - half rect width
-                                    .attr('x', x(data.data.sharedAxis.toString())
-                                        + x.bandwidth() / dp.Series.length * idx
-                                        + x.bandwidth() / dp.Series.length / 2
-                                        - sumBgWidth / 2);
+                                    .attr('x', x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
                             }
 
                             // text
@@ -451,10 +446,7 @@ export class D3Visual {
                                 .attr('text-anchor', 'middle')
                                 .attr('dominant-baseline', 'middle')
                                 .attr('y', y(val) - 10)
-                                // x = bar group xpos + serie xpos + half of bar width
-                                .attr('x', x(data.data.sharedAxis.toString())
-                                    + x.bandwidth() / dp.Series.length * idx
-                                    + x.bandwidth() / dp.Series.length / 2)
+                                .attr('x', x(data.data.sharedAxis.toString()) + x.bandwidth() / 2)
                                 .text(text);
                         }
                     }

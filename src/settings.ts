@@ -103,10 +103,10 @@ export class DataLabelSettings {
     public SumLabelColor: string = '#000000';
     public SumLabelBackgroundColor: string = '#ffffff';
     public SumLabelDisplayTolerance: number = 10;
-    public SumLabelToggle: boolean = false;
+    public SumLabelToggle: boolean = true;
     public SumLabelBgToggle: boolean = false;
 
-    public BarLabelToggle: boolean = false;
+    public BarLabelToggle: boolean = true;
     public BarLabelColor: string = '#000000';
     public BarLabelFontSize: number = 10;
     public BarLabelDisplayTolerance: number = 15;
@@ -123,8 +123,8 @@ export class LegendSettings {
 }
 
 export class GrowthSettings {
-    public TogglePrimaryIndicators: boolean = false;
-    public ToggleSecondaryIndicator: boolean = false;
+    public TogglePrimaryIndicators: boolean = true;
+    public ToggleSecondaryIndicator: boolean = true;
 
     public PrimarySelector: string = '';
     public SecondarySelector: string = '';

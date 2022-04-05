@@ -1,0 +1,17 @@
+{
+    "version": "1.0.0",
+    "author": {"name":"Jesse Xia","email":"jesse.xia@rci.rogers.ca"},
+    "resources": [
+        {
+            "resourceId": "rId0",
+            "sourceType": 5,
+            "file": "resources/targetChart9D5E6D3E19A24BA491DA372F50F53735.pbiviz.json"
+        }
+    ],
+    "visual": {"name":"targetChart","displayName":"targetChart","guid":"targetChart9D5E6D3E19A24BA491DA372F50F53735","visualClassName":"Visual","version":"1.0.0","description":"Custom chart developed to display actual values versus forecasted or target values.","supportUrl":"https://github.com/JesseXia-Rogers/targetChart","gitHubUrl":"https://github.com/JesseXia-Rogers/targetChart"},
+    "metadata": {
+        "pbivizjson": {
+            "resourceId": "rId0"
+        }
+    }  
+}
