@@ -60,7 +60,6 @@ export class Visual implements IVisual {
     private _selectionManager: ISelectionManager;
     private _dataPointsSeries: Interfaces.DataPointSerie[];
     private _series: DataViewValueColumnGroup[];
-    private _colorPalette: colorPalette;
 
     constructor(options: VisualConstructorOptions) {
         this._host = options.host;
@@ -70,7 +69,6 @@ export class Visual implements IVisual {
         this._selectionManager = this._host.createSelectionManager();
         this._dataPointsSeries = [];
         this._series = [];
-        this._colorPalette = this._host.colorPalette;
     }
 
     public update(options: VisualUpdateOptions) {
@@ -103,22 +101,8 @@ export class Visual implements IVisual {
 
             this._dataPointsSeries.push({
                 value: serie.name,
-                selection: seriesSelectionId,
-                seriesColor: this.getColorValue<string>(
-                    serie.objects,
-                    'DataColors',
-                    'seriesColor',
-                    this._colorPalette['colors'][idx].value ??
-                    this._settings.DataColors.seriesColor
-                ),
-                seriesFontColor: this.getColorValue<string>(
-                    serie.objects,
-                    'DataColors',
-                    'seriesFontColor',
-                    this._settings.DataColors.seriesFontColor
-                )
+                selection: seriesSelectionId
             });
-
         });
 
 
@@ -145,58 +129,8 @@ export class Visual implements IVisual {
         let objectName = options.objectName;
         let objectEnumeration: VisualObjectInstance[] = [];
 
-        // console.log(objectEnumeration)
-
-        // adds series-specific settings
-        if (objectName == 'DataColors') {
-            this._dataPointsSeries.forEach(dataPoint => {
-                objectEnumeration.push({
-                    objectName: objectName,
-                    displayName: dataPoint.value.toString() + ' - Series Color',
-                    properties: {
-                        seriesColor: {
-                            solid: {
-                                color: dataPoint.seriesColor
-                            }
-                        }
-                    },
-                    selector: dataPoint.selection.getSelector() // null works too but be more specific just in case
-                });
-                objectEnumeration.push({
-                    objectName: objectName,
-                    displayName: dataPoint.value.toString() + ' - Bar Label Color',
-                    properties: {
-                        seriesFontColor: {
-                            solid: {
-                                color: dataPoint.seriesFontColor
-                            }
-                        }
-                    },
-                    selector: dataPoint.selection.getSelector()
-                });
-            });
-
-            return objectEnumeration;
-        }
-
         const settings: VisualSettings = this._settings || <VisualSettings>VisualSettings.getDefault();
         let instances = VisualSettings.enumerateObjectInstances(settings, options);
         return instances;
-    }
-
-    public getColorValue<T>(objects: DataViewObjects, objectName: string, propertyName: string, defaultValue: T): T {
-        if (objects) {
-            let object: DataViewObject = objects[objectName];
-            if (object) {
-                if (object[propertyName]) {
-                    let color = object[propertyName]['solid'].color;
-                    if (color) {
-                        return color;
-                    }
-                }
-            }
-        }
-
-        return defaultValue;
     }
 }

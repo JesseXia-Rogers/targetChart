@@ -16,6 +16,7 @@ export declare class D3Visual {
     constructor(parent: HTMLElement, settings: VisualSettings, dataPointSeries: Interfaces.DataPointSerie[], selectionManager: ISelectionManager);
     CreateVisualContainer(): void;
     private getRange;
+    private getIndex;
     private getTextWidth;
     private drawTriangle;
     private drawText;

@@ -57,9 +57,6 @@ export interface BarChartDataPoint {
 export interface DataPointSerie {
     value: PrimitiveValue;
     selection: ISelectionId;
-
-    seriesColor: string;
-    seriesFontColor: string;
 }
 
 export let MonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];

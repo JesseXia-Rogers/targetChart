@@ -46,6 +46,8 @@ class D3Visual {
         const BAR_SETTINGS = this._settings.BarSettings;
         const X_AXIS_SETTINGS = this._settings.XAxisSettings;
         const Y_AXIS_SETTINGS = this._settings.YAxisSettings;
+        const SECOND_SERIES = this._settings.Serie2Settings;
+        const FIRST_SERIES = this._settings.Serie1Settings;
         const DATA_LABEL_SETTINGS = this._settings.DataLabelSettings;
         const LEGEND_SETTINGS = this._settings.LegendSettings;
         const GROWTH_SETTINGS = this._settings.GrowthSettings;
@@ -227,7 +229,7 @@ class D3Visual {
                 .attr('width', 10)
                 .attr('height', 10)
                 .attr('y', 0)
-                .attr('fill', d => this._dataPointSeries[d.index].seriesColor);
+                .attr('fill', (_, idx) => idx ? FIRST_SERIES.SerieColor : SECOND_SERIES.SerieColor);
             // adds legend text
             let legendText = legend.append('text')
                 .attr('x', 15)
@@ -257,23 +259,25 @@ class D3Visual {
                 .data(serie)
                 .join('rect')
                 .classed('bar', true)
-                .attr('fill', this._dataPointSeries[serie.index].seriesColor)
+                .attr('fill', idx ? FIRST_SERIES.SerieColor : SECOND_SERIES.SerieColor)
+                .attr('stroke-width', BAR_SETTINGS.BarBorder)
+                .attr('stroke-dasharray', '1,3')
+                .attr('stroke', BAR_SETTINGS.BarBorderColor)
                 .attr('width', x.bandwidth())
                 .attr('x', data => x(data.data.sharedAxis.toString()))
                 .attr('serie', _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series */ .FH[idx])
                 .attr('xIdx', (_, i) => i);
             // create label on each bar
             let barLabel = null;
-            let serieFontColor = this._dataPointSeries[serie.index].seriesFontColor;
-            if (DATA_LABEL_SETTINGS.BarLabelToggle) {
+            if (idx ? FIRST_SERIES.BarLabelToggle : SECOND_SERIES.BarLabelToggle) {
                 barLabel = svg.selectAll('.label')
                     .data(serie)
                     .enter()
                     .append('text')
                     .attr('width', x.bandwidth())
-                    .attr('height', DATA_LABEL_SETTINGS.BarLabelFontSize)
-                    .attr('fill', serieFontColor != '#000000' ? serieFontColor : DATA_LABEL_SETTINGS.BarLabelColor)
-                    .attr('font-size', DATA_LABEL_SETTINGS.BarLabelFontSize)
+                    .attr('height', DATA_LABEL_SETTINGS.LabelFontSize)
+                    .attr('fill', idx ? FIRST_SERIES.LabelFontColor : SECOND_SERIES.LabelFontColor)
+                    .attr('font-size', DATA_LABEL_SETTINGS.LabelFontSize)
                     .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
                     .attr('text-anchor', 'middle')
                     .attr('dominant-baseline', 'middle');
@@ -288,7 +292,7 @@ class D3Visual {
                 .call(setYAxisGAttr);
             // removes first label
             d3__WEBPACK_IMPORTED_MODULE_0__/* .select */ .Ys('.y-axis-g > .tick')
-                .filter((d, i) => i == 0)
+                .filter((_, i) => i == 0)
                 .remove();
             // removes border
             d3__WEBPACK_IMPORTED_MODULE_0__/* .selectAll */ .td_('.domain').remove();
@@ -318,63 +322,51 @@ class D3Visual {
                 // height sets height of rectangle rendered from starting y pos
                 .attr('height', data => y(data[0]) - y(data[1]));
             // show text if bar height allows and bar labels are toggled on
-            if (DATA_LABEL_SETTINGS.BarLabelToggle) {
-                barLabel.text(data => {
+            if (idx ? FIRST_SERIES.BarLabelToggle : SECOND_SERIES.BarLabelToggle) {
+                let getLabelText = data => {
                     // gets data value
                     let val = data.data[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series */ .FH[idx]];
                     // gets bar height
                     let barHeight = y(data[0]) - y(data[1]);
                     // max allowable text width
-                    let maxTextWidth = x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length + DATA_LABEL_SETTINGS.BarLabelDisplayTolerance;
+                    let maxTextWidth = x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length + DATA_LABEL_SETTINGS.LabelDisplayTolerance;
                     val = nFormatter(val, displayDigits, displayUnits);
-                    if (this.getTextWidth(val, DATA_LABEL_SETTINGS) > maxTextWidth ||
-                        barHeight <= DATA_LABEL_SETTINGS.BarLabelFontSize) {
+                    let textWidth = this.getTextWidth(val, DATA_LABEL_SETTINGS);
+                    if (textWidth > maxTextWidth ||
+                        barHeight <= DATA_LABEL_SETTINGS.LabelFontSize) {
                         return null;
                     }
-                    return val;
-                });
-                barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
-                    .attr('y', data => height - (y(data[0]) - y(data[1])) / 2);
+                    return {
+                        value: val,
+                        width: textWidth
+                    };
+                };
+                let labelPos = idx ? FIRST_SERIES.BarLabelPosition : SECOND_SERIES.BarLabelPosition;
+                if (labelPos == 'mid') {
+                    barLabel.text(data => getLabelText(data).value)
+                        .attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                        .attr('y', data => height - (y(data[0]) - y(data[1])) / 2);
+                }
+                else if (labelPos == 'top') {
+                    if (idx ? FIRST_SERIES.LabelBgToggle : SECOND_SERIES.LabelBgToggle) {
+                        // background
+                        let bgPadding = 8;
+                        svg.selectAll('.labelBg')
+                            .data(serie)
+                            .enter()
+                            .append('rect')
+                            .attr('width', data => this.getTextWidth((data[1] - data[0]).toString(), DATA_LABEL_SETTINGS) + bgPadding)
+                            .attr('height', DATA_LABEL_SETTINGS.LabelFontSize + bgPadding / 2)
+                            .attr('fill', idx ? FIRST_SERIES.LabelBackgroundColor : SECOND_SERIES.LabelBackgroundColor)
+                            .attr('y', data => y(data[1] - data[0]) - 18)
+                            .attr('x', data => x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
+                    }
+                    barLabel.text(data => getLabelText(data).value)
+                        .attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                        .attr('y', data => y(data[1] - data[0]) - 10);
+                }
             }
         });
-        // show summation label
-        if (DATA_LABEL_SETTINGS.SumLabelToggle) {
-            stackData.forEach((serie, idx) => {
-                serie.forEach(data => {
-                    let val = data[1] - data[0];
-                    // display value if not 0
-                    if (val) {
-                        let text = nFormatter(val, displayDigits, displayUnits);
-                        let textWidth = this.getTextWidth(text, DATA_LABEL_SETTINGS);
-                        // display value if bar width allows
-                        if (x.bandwidth() + DATA_LABEL_SETTINGS.SumLabelDisplayTolerance > textWidth) {
-                            let bgPadding = 8;
-                            let sumBgWidth = textWidth + bgPadding;
-                            if (DATA_LABEL_SETTINGS.SumLabelBgToggle) {
-                                // background
-                                svg.append('rect')
-                                    .attr('width', sumBgWidth)
-                                    .attr('height', DATA_LABEL_SETTINGS.SumLabelFontSize + bgPadding / 2)
-                                    .attr('fill', DATA_LABEL_SETTINGS.SumLabelBackgroundColor)
-                                    .attr('y', y(val) - 18)
-                                    .attr('x', x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
-                            }
-                            // text
-                            svg.append('text')
-                                .attr('width', x.bandwidth())
-                                .attr('fill', DATA_LABEL_SETTINGS.SumLabelColor)
-                                .attr('font-size', DATA_LABEL_SETTINGS.SumLabelFontSize)
-                                .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
-                                .attr('text-anchor', 'middle')
-                                .attr('dominant-baseline', 'middle')
-                                .attr('y', y(val) - 10)
-                                .attr('x', x(data.data.sharedAxis.toString()) + x.bandwidth() / 2)
-                                .text(text);
-                        }
-                    }
-                });
-            });
-        }
         let heightOffset = PRIMARY_LINE_SETTINGS.LineOffsetHeight;
         // draw primary growth indicators
         if (_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length > 1 &&
@@ -448,9 +440,9 @@ class D3Visual {
             if (primSel[0]) {
                 primSel.forEach(selector => {
                     if (selector) {
-                        let data1 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[selector][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
-                        let data2 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[selector][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
-                        drawPrimaryIndicators(data1, data2, _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[selector]);
+                        let data1 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
+                        let data2 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
+                        drawPrimaryIndicators(data1, data2, _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)]);
                     }
                 });
             }
@@ -541,9 +533,9 @@ class D3Visual {
             if (secSel[0]) {
                 secSel.forEach(selector => {
                     if (selector) {
-                        let data1 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[selector][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
-                        let data2 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[selector][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
-                        drawSecondaryIndicators(data1, data2, _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[selector]);
+                        let data1 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
+                        let data2 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
+                        drawSecondaryIndicators(data1, data2, _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)]);
                     }
                 });
             }
@@ -577,6 +569,24 @@ class D3Visual {
             max: topRounded,
             min: 0
         };
+    }
+    // get index of selector
+    getIndex(selector) {
+        /*
+        * Param: selector
+        * Returns: corresponding column index in data table
+        */
+        let selectedIdx = -1;
+        _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data.forEach */ .$m.forEach((data, idx) => {
+            if (data.sharedAxis == selector)
+                selectedIdx = idx;
+        });
+        // sanity check
+        if (selectedIdx == -1) {
+            this.parent.innerHTML = 'Growth Selector not correct';
+            return selectedIdx;
+        }
+        return selectedIdx;
     }
     // gets displayed width of text
     getTextWidth(text, settings) {
@@ -834,7 +844,7 @@ let MonthNames = ["January", "February", "March", "April", "May", "June", "July"
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Jx": () => (/* binding */ VisualSettings)
 /* harmony export */ });
-/* unused harmony exports LayoutSettings, BarSettings, XAxisSettings, YAxisSettings, DataColors, DataLabelSettings, LegendSettings, GrowthSettings, PrimaryLabelSettings, PrimaryLineSettings, SecondaryLabelSettings, SecondaryLineSettings */
+/* unused harmony exports LayoutSettings, BarSettings, XAxisSettings, YAxisSettings, DataColors, Serie2Settings, Serie1Settings, DataLabelSettings, LegendSettings, GrowthSettings, PrimaryLabelSettings, PrimaryLineSettings, SecondaryLabelSettings, SecondaryLineSettings */
 /* harmony import */ var powerbi_visuals_utils_dataviewutils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(24554);
 /*
  *  Power BI Visualizations
@@ -873,7 +883,8 @@ class VisualSettings extends DataViewObjectsParser {
         this.GrowthSettings = new GrowthSettings();
         this.LayoutSettings = new LayoutSettings();
         this.BarSettings = new BarSettings();
-        this.DataColors = new DataColors();
+        this.Serie2Settings = new Serie2Settings();
+        this.Serie1Settings = new Serie1Settings();
         this.LegendSettings = new LegendSettings();
         this.PrimaryLabelSettings = new PrimaryLabelSettings();
         this.PrimaryLineSettings = new PrimaryLineSettings();
@@ -926,21 +937,35 @@ class DataColors {
         this.seriesColor = '#000000';
     }
 }
+class Serie2Settings {
+    constructor() {
+        this.SerieColor = '#118DFF';
+        this.ShowSerie = true;
+        this.BarLabelToggle = true;
+        this.LabelBgToggle = false;
+        this.LabelFontColor = '#000000';
+        this.LabelBackgroundColor = '#ffffff';
+        this.BarLabelPosition = 'top';
+    }
+}
+class Serie1Settings {
+    constructor() {
+        this.SerieColor = '#12239E';
+        this.ShowSerie = true;
+        this.BarLabelToggle = true;
+        this.LabelFontColor = '#000000';
+        this.LabelBgToggle = false;
+        this.LabelBackgroundColor = '#ffffff';
+        this.BarLabelPosition = 'top';
+    }
+}
 class DataLabelSettings {
     constructor() {
         this.DisplayUnits = 'auto';
         this.DisplayDigits = 1;
         this.FontFamily = 'Calibri';
-        this.SumLabelFontSize = 10;
-        this.SumLabelColor = '#000000';
-        this.SumLabelBackgroundColor = '#ffffff';
-        this.SumLabelDisplayTolerance = 10;
-        this.SumLabelToggle = true;
-        this.SumLabelBgToggle = false;
-        this.BarLabelToggle = true;
-        this.BarLabelColor = '#000000';
-        this.BarLabelFontSize = 10;
-        this.BarLabelDisplayTolerance = 15;
+        this.LabelFontSize = 10;
+        this.LabelDisplayTolerance = 10;
     }
 }
 class LegendSettings {
@@ -1067,7 +1092,6 @@ class Visual {
         this._selectionManager = this._host.createSelectionManager();
         this._dataPointsSeries = [];
         this._series = [];
-        this._colorPalette = this._host.colorPalette;
     }
     update(options) {
         this._dataView = options.dataViews[0];
@@ -1088,16 +1112,13 @@ class Visual {
         this._dataPointsSeries = [];
         // iterate all series to generate selection and create button elements to use selections
         this._series.forEach((serie, idx) => {
-            var _a;
             // create selection id for series
             const seriesSelectionId = this._host.createSelectionIdBuilder()
                 .withSeries(dataView.categorical.values, serie)
                 .createSelectionId();
             this._dataPointsSeries.push({
                 value: serie.name,
-                selection: seriesSelectionId,
-                seriesColor: this.getColorValue(serie.objects, 'DataColors', 'seriesColor', (_a = this._colorPalette['colors'][idx].value) !== null && _a !== void 0 ? _a : this._settings.DataColors.seriesColor),
-                seriesFontColor: this.getColorValue(serie.objects, 'DataColors', 'seriesFontColor', this._settings.DataColors.seriesFontColor)
+                selection: seriesSelectionId
             });
         });
         // delete instance if already exists
@@ -1114,54 +1135,9 @@ class Visual {
     enumerateObjectInstances(options) {
         let objectName = options.objectName;
         let objectEnumeration = [];
-        // console.log(objectEnumeration)
-        // adds series-specific settings
-        if (objectName == 'DataColors') {
-            this._dataPointsSeries.forEach(dataPoint => {
-                objectEnumeration.push({
-                    objectName: objectName,
-                    displayName: dataPoint.value.toString() + ' - Series Color',
-                    properties: {
-                        seriesColor: {
-                            solid: {
-                                color: dataPoint.seriesColor
-                            }
-                        }
-                    },
-                    selector: dataPoint.selection.getSelector() // null works too but be more specific just in case
-                });
-                objectEnumeration.push({
-                    objectName: objectName,
-                    displayName: dataPoint.value.toString() + ' - Bar Label Color',
-                    properties: {
-                        seriesFontColor: {
-                            solid: {
-                                color: dataPoint.seriesFontColor
-                            }
-                        }
-                    },
-                    selector: dataPoint.selection.getSelector()
-                });
-            });
-            return objectEnumeration;
-        }
         const settings = this._settings || _settings__WEBPACK_IMPORTED_MODULE_1__/* .VisualSettings.getDefault */ .Jx.getDefault();
         let instances = _settings__WEBPACK_IMPORTED_MODULE_1__/* .VisualSettings.enumerateObjectInstances */ .Jx.enumerateObjectInstances(settings, options);
         return instances;
-    }
-    getColorValue(objects, objectName, propertyName, defaultValue) {
-        if (objects) {
-            let object = objects[objectName];
-            if (object) {
-                if (object[propertyName]) {
-                    let color = object[propertyName]['solid'].color;
-                    if (color) {
-                        return color;
-                    }
-                }
-            }
-        }
-        return defaultValue;
     }
 }
 

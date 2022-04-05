@@ -36,7 +36,8 @@ export class VisualSettings extends DataViewObjectsParser {
     public GrowthSettings: GrowthSettings = new GrowthSettings();
     public LayoutSettings: LayoutSettings = new LayoutSettings();
     public BarSettings: BarSettings = new BarSettings();
-    public DataColors: DataColors = new DataColors();
+    public Serie2Settings: Serie2Settings = new Serie2Settings();
+    public Serie1Settings: Serie1Settings = new Serie1Settings();
     public LegendSettings: LegendSettings = new LegendSettings();
     public PrimaryLabelSettings: PrimaryLabelSettings = new PrimaryLabelSettings();
     public PrimaryLineSettings: PrimaryLineSettings = new PrimaryLineSettings();
@@ -93,23 +94,36 @@ export class DataColors {
     public seriesColor: string = '#000000';
 }
 
+export class Serie2Settings {
+    public SerieColor: string = '#118DFF';
+
+    public ShowSerie: boolean = true;
+    public BarLabelToggle: boolean = true;
+    public LabelBgToggle: boolean = false;
+    public LabelFontColor: string = '#000000';
+    public LabelBackgroundColor: string = '#ffffff';
+    public BarLabelPosition: string = 'top';
+}
+
+export class Serie1Settings {
+    public SerieColor: string = '#12239E';
+
+    public ShowSerie: boolean = true;
+    public BarLabelToggle: boolean = true;
+    public LabelFontColor: string = '#000000';
+    public LabelBgToggle: boolean = false;
+    public LabelBackgroundColor: string = '#ffffff';
+    public BarLabelPosition: string = 'top';
+}
+
 export class DataLabelSettings {
     public DisplayUnits: string = 'auto';
     public DisplayDigits: number = 1;
 
     public FontFamily: string = 'Calibri';
 
-    public SumLabelFontSize: number = 10;
-    public SumLabelColor: string = '#000000';
-    public SumLabelBackgroundColor: string = '#ffffff';
-    public SumLabelDisplayTolerance: number = 10;
-    public SumLabelToggle: boolean = true;
-    public SumLabelBgToggle: boolean = false;
-
-    public BarLabelToggle: boolean = true;
-    public BarLabelColor: string = '#000000';
-    public BarLabelFontSize: number = 10;
-    public BarLabelDisplayTolerance: number = 15;
+    public LabelFontSize: number = 10;
+    public LabelDisplayTolerance: number = 10;
 }
 
 export class LegendSettings {

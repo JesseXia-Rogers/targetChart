@@ -262,11 +262,11 @@
                 }
             }
         },
-        "DataColors": {
-            "displayName": "Data Colors",
+        "Serie1Settings": {
+            "displayName": "First Series",
             "properties": {
-                "seriesColor": {
-                    "displayName": "Series Color",
+                "SerieColor": {
+                    "displayName": "Serie Color",
                     "type": {
                         "fill": {
                             "solid": {
@@ -275,14 +275,125 @@
                         }
                     }
                 },
-                "seriesFontColor": {
-                    "displayName": "Bar Label Color",
+                "ShowSerie": {
+                    "displayName": "Show Series",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "BarLabelToggle": {
+                    "displayName": "Show Bar Labels",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "FontColor": {
+                    "displayName": "Label Font Color",
                     "type": {
                         "fill": {
                             "solid": {
                                 "color": true
                             }
                         }
+                    }
+                },
+                "LabelBgToggle": {
+                    "displayName": "Show Label Background",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "LabelBackgroundColor": {
+                    "displayName": "Label Background Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "BarLabelPosition": {
+                    "displayName": "Bar Label Position",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "displayName": "Middle",
+                                "value": "mid"
+                            },
+                            {
+                                "displayName": "Top",
+                                "value": "top"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        "Serie2Settings": {
+            "displayName": "Second Series",
+            "properties": {
+                "SerieColor": {
+                    "displayName": "Serie Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "ShowSerie": {
+                    "displayName": "Show Series",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "BarLabelToggle": {
+                    "displayName": "Show Bar Labels",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "FontColor": {
+                    "displayName": "Label Font Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "LabelBgToggle": {
+                    "displayName": "Show Label Background",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "LabelBackgroundColor": {
+                    "displayName": "Label Background Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "BarLabelPosition": {
+                    "displayName": "Bar Label Position",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "displayName": "Middle",
+                                "value": "mid"
+                            },
+                            {
+                                "displayName": "Top",
+                                "value": "top"
+                            }
+                        ]
                     }
                 }
             }
@@ -335,74 +446,14 @@
                         }
                     }
                 },
-                "SumLabelColor": {
-                    "displayName": "Sum Label Font Color",
-                    "type": {
-                        "fill": {
-                            "solid": {
-                                "color": true
-                            }
-                        }
-                    }
-                },
-                "BarLabelColor": {
-                    "displayName": "Bar Label Font Color",
-                    "type": {
-                        "fill": {
-                            "solid": {
-                                "color": true
-                            }
-                        }
-                    }
-                },
-                "SumLabelFontSize": {
-                    "displayName": "Sum Label Font Size",
+                "FontSize": {
+                    "displayName": "Label Font Size",
                     "type": {
                         "numeric": true
                     }
                 },
-                "BarLabelFontSize": {
-                    "displayName": "Bar Label Font Size",
-                    "type": {
-                        "numeric": true
-                    }
-                },
-                "SumLabelBackgroundColor": {
-                    "displayName": "Sum Label Background Color",
-                    "type": {
-                        "fill": {
-                            "solid": {
-                                "color": true
-                            }
-                        }
-                    }
-                },
-                "SumLabelToggle": {
-                    "displayName": "Show Sum Labels",
-                    "type": {
-                        "bool": true
-                    }
-                },
-                "BarLabelToggle": {
-                    "displayName": "Show Bar Labels",
-                    "type": {
-                        "bool": true
-                    }
-                },
-                "BarLabelDisplayTolerance": {
-                    "displayName": "Bar Label Display Tolerance",
-                    "type": {
-                        "numeric": true
-                    }
-                },
-                "SumLabelBgToggle": {
-                    "displayName": "Show Sum Label Background",
-                    "type": {
-                        "bool": true
-                    }
-                },
-                "SumLabelDisplayTolerance": {
-                    "displayName": "Sum Label Display Tolerance",
+                "LabelDisplayTolerance": {
+                    "displayName": "Label Display Tolerance",
                     "type": {
                         "numeric": true
                     }

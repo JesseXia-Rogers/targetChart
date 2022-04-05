@@ -7,7 +7,8 @@ export declare class VisualSettings extends DataViewObjectsParser {
     GrowthSettings: GrowthSettings;
     LayoutSettings: LayoutSettings;
     BarSettings: BarSettings;
-    DataColors: DataColors;
+    Serie2Settings: Serie2Settings;
+    Serie1Settings: Serie1Settings;
     LegendSettings: LegendSettings;
     PrimaryLabelSettings: PrimaryLabelSettings;
     PrimaryLineSettings: PrimaryLineSettings;
@@ -48,20 +49,30 @@ export declare class DataColors {
     seriesFontColor: string;
     seriesColor: string;
 }
+export declare class Serie2Settings {
+    SerieColor: string;
+    ShowSerie: boolean;
+    BarLabelToggle: boolean;
+    LabelBgToggle: boolean;
+    LabelFontColor: string;
+    LabelBackgroundColor: string;
+    BarLabelPosition: string;
+}
+export declare class Serie1Settings {
+    SerieColor: string;
+    ShowSerie: boolean;
+    BarLabelToggle: boolean;
+    LabelFontColor: string;
+    LabelBgToggle: boolean;
+    LabelBackgroundColor: string;
+    BarLabelPosition: string;
+}
 export declare class DataLabelSettings {
     DisplayUnits: string;
     DisplayDigits: number;
     FontFamily: string;
-    SumLabelFontSize: number;
-    SumLabelColor: string;
-    SumLabelBackgroundColor: string;
-    SumLabelDisplayTolerance: number;
-    SumLabelToggle: boolean;
-    SumLabelBgToggle: boolean;
-    BarLabelToggle: boolean;
-    BarLabelColor: string;
-    BarLabelFontSize: number;
-    BarLabelDisplayTolerance: number;
+    LabelFontSize: number;
+    LabelDisplayTolerance: number;
 }
 export declare class LegendSettings {
     LegendToggle: boolean;

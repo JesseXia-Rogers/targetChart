@@ -5,7 +5,7 @@ import * as Interfaces from './interfaces';
 
 import * as d3 from 'd3';
 import powerbi from 'powerbi-visuals-api';
-import { BarSettings, VisualSettings } from './settings';
+import { VisualSettings } from './settings';
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
 
 // type
@@ -61,6 +61,8 @@ export class D3Visual {
         const BAR_SETTINGS = this._settings.BarSettings;
         const X_AXIS_SETTINGS = this._settings.XAxisSettings;
         const Y_AXIS_SETTINGS = this._settings.YAxisSettings;
+        const SECOND_SERIES = this._settings.Serie2Settings;
+        const FIRST_SERIES = this._settings.Serie1Settings;
         const DATA_LABEL_SETTINGS = this._settings.DataLabelSettings;
         const LEGEND_SETTINGS = this._settings.LegendSettings;
         const GROWTH_SETTINGS = this._settings.GrowthSettings;
@@ -279,7 +281,7 @@ export class D3Visual {
                 .attr('width', 10)
                 .attr('height', 10)
                 .attr('y', 0)
-                .attr('fill', d => this._dataPointSeries[d.index].seriesColor);
+                .attr('fill', (_, idx) => idx ? FIRST_SERIES.SerieColor : SECOND_SERIES.SerieColor);
 
             // adds legend text
             let legendText = legend.append('text')
@@ -313,7 +315,10 @@ export class D3Visual {
                 .data(serie)
                 .join('rect')
                 .classed('bar', true)
-                .attr('fill', this._dataPointSeries[serie.index].seriesColor)
+                .attr('fill', idx ? FIRST_SERIES.SerieColor : SECOND_SERIES.SerieColor)
+                .attr('stroke-width', BAR_SETTINGS.BarBorder)
+                .attr('stroke-dasharray', '1,3')
+                .attr('stroke', BAR_SETTINGS.BarBorderColor)
                 .attr('width', x.bandwidth())
                 .attr('x', data => x(data.data.sharedAxis.toString()))
                 .attr('serie', dp.Series[idx])
@@ -321,17 +326,16 @@ export class D3Visual {
 
             // create label on each bar
             let barLabel = null;
-            let serieFontColor = this._dataPointSeries[serie.index].seriesFontColor;
 
-            if (DATA_LABEL_SETTINGS.BarLabelToggle) {
+            if (idx ? FIRST_SERIES.BarLabelToggle : SECOND_SERIES.BarLabelToggle) {
                 barLabel = svg.selectAll('.label')
                     .data(serie)
                     .enter()
                     .append('text')
                     .attr('width', x.bandwidth())
-                    .attr('height', DATA_LABEL_SETTINGS.BarLabelFontSize)
-                    .attr('fill', serieFontColor != '#000000' ? serieFontColor : DATA_LABEL_SETTINGS.BarLabelColor)
-                    .attr('font-size', DATA_LABEL_SETTINGS.BarLabelFontSize)
+                    .attr('height', DATA_LABEL_SETTINGS.LabelFontSize)
+                    .attr('fill', idx ? FIRST_SERIES.LabelFontColor : SECOND_SERIES.LabelFontColor)
+                    .attr('font-size', DATA_LABEL_SETTINGS.LabelFontSize)
                     .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
                     .attr('text-anchor', 'middle')
                     .attr('dominant-baseline', 'middle');
@@ -351,7 +355,7 @@ export class D3Visual {
 
             // removes first label
             d3.select('.y-axis-g > .tick')
-                .filter((d, i) => i == 0)
+                .filter((_, i) => i == 0)
                 .remove();
 
             // removes border
@@ -384,8 +388,8 @@ export class D3Visual {
                 .attr('height', data => y(data[0]) - y(data[1]));
 
             // show text if bar height allows and bar labels are toggled on
-            if (DATA_LABEL_SETTINGS.BarLabelToggle) {
-                barLabel.text(data => {
+            if (idx ? FIRST_SERIES.BarLabelToggle : SECOND_SERIES.BarLabelToggle) {
+                let getLabelText = data => {
                     // gets data value
                     let val = data.data[dp.Series[idx]];
 
@@ -393,66 +397,50 @@ export class D3Visual {
                     let barHeight = y(data[0]) - y(data[1]);
 
                     // max allowable text width
-                    let maxTextWidth = x.bandwidth() / dp.Series.length + DATA_LABEL_SETTINGS.BarLabelDisplayTolerance;
+                    let maxTextWidth = x.bandwidth() / dp.Series.length + DATA_LABEL_SETTINGS.LabelDisplayTolerance;
 
                     val = nFormatter(val, displayDigits, displayUnits);
+                    let textWidth = this.getTextWidth(val, DATA_LABEL_SETTINGS);
 
-                    if (this.getTextWidth(val, DATA_LABEL_SETTINGS) > maxTextWidth ||
-                        barHeight <= DATA_LABEL_SETTINGS.BarLabelFontSize) {
+                    if (textWidth > maxTextWidth ||
+                        barHeight <= DATA_LABEL_SETTINGS.LabelFontSize) {
                         return null;
                     }
 
-                    return val;
-                });
+                    return {
+                        value: val,
+                        width: textWidth
+                    }
+                }
 
-                barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
-                    .attr('y', data => height - (y(data[0]) - y(data[1])) / 2);
+                let labelPos = idx ? FIRST_SERIES.BarLabelPosition : SECOND_SERIES.BarLabelPosition;
+                if (labelPos == 'mid') {
+                    barLabel.text(data => getLabelText(data).value)
+                        .attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                        .attr('y', data => height - (y(data[0]) - y(data[1])) / 2);
+
+                } else if (labelPos == 'top') {
+
+                    if (idx ? FIRST_SERIES.LabelBgToggle : SECOND_SERIES.LabelBgToggle) {
+                        // background
+                        let bgPadding = 8;
+                        svg.selectAll('.labelBg')
+                            .data(serie)
+                            .enter()
+                            .append('rect')
+                            .attr('width', data => this.getTextWidth((data[1] - data[0]).toString(), DATA_LABEL_SETTINGS) + bgPadding)
+                            .attr('height', DATA_LABEL_SETTINGS.LabelFontSize + bgPadding / 2)
+                            .attr('fill', idx ? FIRST_SERIES.LabelBackgroundColor : SECOND_SERIES.LabelBackgroundColor)
+                            .attr('y', data => y(data[1] - data[0]) - 18)
+                            .attr('x', data => x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
+                    }
+
+                    barLabel.text(data => getLabelText(data).value)
+                        .attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                        .attr('y', data => y(data[1] - data[0]) - 10);
+                }
             }
         });
-
-        // show summation label
-        if (DATA_LABEL_SETTINGS.SumLabelToggle) {
-            stackData.forEach((serie, idx) => {
-                
-                serie.forEach(data => {
-                    let val = data[1] - data[0];
-
-                    // display value if not 0
-                    if (val) {
-                        let text = nFormatter(val, displayDigits, displayUnits);
-                        let textWidth = this.getTextWidth(text, DATA_LABEL_SETTINGS);
-
-                        // display value if bar width allows
-                        if (x.bandwidth() + DATA_LABEL_SETTINGS.SumLabelDisplayTolerance > textWidth) {
-                            let bgPadding = 8;
-                            let sumBgWidth = textWidth + bgPadding;
-
-                            if (DATA_LABEL_SETTINGS.SumLabelBgToggle) {
-                                // background
-                                svg.append('rect')
-                                    .attr('width', sumBgWidth)
-                                    .attr('height', DATA_LABEL_SETTINGS.SumLabelFontSize + bgPadding / 2)
-                                    .attr('fill', DATA_LABEL_SETTINGS.SumLabelBackgroundColor)
-                                    .attr('y', y(val) - 18)
-                                    .attr('x', x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
-                            }
-
-                            // text
-                            svg.append('text')
-                                .attr('width', x.bandwidth())
-                                .attr('fill', DATA_LABEL_SETTINGS.SumLabelColor)
-                                .attr('font-size', DATA_LABEL_SETTINGS.SumLabelFontSize)
-                                .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
-                                .attr('text-anchor', 'middle')
-                                .attr('dominant-baseline', 'middle')
-                                .attr('y', y(val) - 10)
-                                .attr('x', x(data.data.sharedAxis.toString()) + x.bandwidth() / 2)
-                                .text(text);
-                        }
-                    }
-                });
-            });
-        }
 
         let heightOffset = PRIMARY_LINE_SETTINGS.LineOffsetHeight;
 
@@ -545,10 +533,10 @@ export class D3Visual {
             if (primSel[0]) {
                 primSel.forEach(selector => {
                     if (selector) {
-                        let data1 = dp.D3Data[selector][dp.Series[0]];
-                        let data2 = dp.D3Data[selector][dp.Series[1]];
+                        let data1 = dp.D3Data[this.getIndex(selector)][dp.Series[0]];
+                        let data2 = dp.D3Data[this.getIndex(selector)][dp.Series[1]];
 
-                        drawPrimaryIndicators(data1, data2, dp.D3Data[selector]);
+                        drawPrimaryIndicators(data1, data2, dp.D3Data[this.getIndex(selector)]);
                     }
                 });
             } else {
@@ -657,10 +645,10 @@ export class D3Visual {
             if (secSel[0]) {
                 secSel.forEach(selector => {
                     if (selector) {
-                        let data1 = dp.D3Data[selector][dp.Series[0]];
-                        let data2 = dp.D3Data[selector][dp.Series[1]];
+                        let data1 = dp.D3Data[this.getIndex(selector)][dp.Series[0]];
+                        let data2 = dp.D3Data[this.getIndex(selector)][dp.Series[1]];
 
-                        drawSecondaryIndicators(data1, data2, dp.D3Data[selector]);
+                        drawSecondaryIndicators(data1, data2, dp.D3Data[this.getIndex(selector)]);
                     }
                 });
             } else {
@@ -698,6 +686,28 @@ export class D3Visual {
             max: topRounded,
             min: 0
         }
+    }
+
+    // get index of selector
+    private getIndex(selector: string): number {
+        /* 
+        * Param: selector 
+        * Returns: corresponding column index in data table
+        */
+        let selectedIdx = -1;
+
+        dp.D3Data.forEach((data, idx) => {
+            if (data.sharedAxis == selector)
+                selectedIdx = idx;
+        });
+
+        // sanity check
+        if (selectedIdx == -1) {
+            this.parent.innerHTML = 'Growth Selector not correct';
+            return selectedIdx;
+        }
+
+        return selectedIdx;
     }
 
     // gets displayed width of text
