@@ -711,6 +711,7 @@ class D3Visual {
                         let xPos = Math.min(growth2X, growth1X) - eval(setting + '_GROWTH_SETTINGS').LabelXOffset;
                         // ensures x pos does not exceed width
                         xPos = xPos < 0 ? 0 : xPos;
+                        let arrowRotation = -30;
                         if (eval(setting + '_GROWTH_SETTINGS').DisplaySide == 'right') {
                             // adds offset to account for bar width
                             growth1X += x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length;
@@ -719,6 +720,7 @@ class D3Visual {
                             xPos = Math.max(growth2X, growth1X) + eval(setting + '_GROWTH_SETTINGS').LabelXOffset;
                             // ensures x pos does not exceed width
                             xPos = xPos < trueWidth ? xPos : trueWidth;
+                            arrowRotation = 30;
                         }
                         // draw line
                         let path = d3__WEBPACK_IMPORTED_MODULE_0__/* .line */ .jvg()([
@@ -744,17 +746,17 @@ class D3Visual {
                         switch (eval(setting + '_LINE_SETTINGS').DisplayArrow) {
                             case 'left':
                                 // draw first arrow
-                                this.drawTriangle(growth1X, growth1Y, eval(setting + '_LINE_SETTINGS'), 30);
+                                this.drawTriangle(growth1X, growth1Y, eval(setting + '_LINE_SETTINGS'), arrowRotation);
                                 break;
                             case 'right':
                                 // draw second arrow
-                                this.drawTriangle(growth2X, growth2Y, eval(setting + '_LINE_SETTINGS'), 30);
+                                this.drawTriangle(growth2X, growth2Y, eval(setting + '_LINE_SETTINGS'), arrowRotation);
                                 break;
                             case 'both':
                                 // draw first arrow
-                                this.drawTriangle(growth1X, growth1Y, eval(setting + '_LINE_SETTINGS'), 30);
+                                this.drawTriangle(growth1X, growth1Y, eval(setting + '_LINE_SETTINGS'), arrowRotation);
                                 // draw second arrow
-                                this.drawTriangle(growth2X, growth2Y, eval(setting + '_LINE_SETTINGS'), 30);
+                                this.drawTriangle(growth2X, growth2Y, eval(setting + '_LINE_SETTINGS'), arrowRotation);
                                 break;
                             default:
                                 break;
