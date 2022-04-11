@@ -162,6 +162,7 @@
 .data-container,
 .x-axis-label,
 .horz-grid-line,
+.threshold-line,
 .bar {
   background-color: transparent;
 }

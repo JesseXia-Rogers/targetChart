@@ -10,7 +10,9 @@ var targetChart9D5E6D3E19A24BA491DA372F50F53735_DEBUG;
 /* harmony export */   "d": () => (/* binding */ D3Visual)
 /* harmony export */ });
 /* harmony import */ var _dataProcess__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(12682);
+/* harmony import */ var _interfaces__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(63003);
 /* harmony import */ var d3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(662);
+
 
 
 
@@ -50,11 +52,16 @@ class D3Visual {
         const FIRST_SERIES = this._settings.Serie1Settings;
         const DATA_LABEL_SETTINGS = this._settings.DataLabelSettings;
         const LEGEND_SETTINGS = this._settings.LegendSettings;
-        const GROWTH_SETTINGS = this._settings.GrowthSettings;
+        const GROWTH_BAR_SETTINGS = this._settings.GrowthBarSettings;
+        const GROWTH_LABEL_SETTINGS = this._settings.GrowthLabelSettings;
+        const PRIMARY_GROWTH_SETTINGS = this._settings.PrimaryGrowthSettings;
+        const LINE_SETTINGS = this._settings.LineSettings;
         const PRIMARY_LABEL_SETTINGS = this._settings.PrimaryLabelSettings;
         const PRIMARY_LINE_SETTINGS = this._settings.PrimaryLineSettings;
+        const SECONDARY_GROWTH_SETTINGS = this._settings.SecondaryGrowthSettings;
         const SECONDARY_LABEL_SETTINGS = this._settings.SecondaryLabelSettings;
         const SECONDARY_LINE_SETTINGS = this._settings.SecondaryLineSettings;
+        const SECONDARY_Y_AXIS = this._settings.SecondaryYAxis;
         // create visual container
         this.container = document.createElement('div');
         this.container.setAttribute('class', 'visual-container');
@@ -83,18 +90,19 @@ class D3Visual {
         this.svg = svg;
         // get and set svg attr
         let xPadding = LAYOUT_SETTINGS.ChartXMargin;
-        let yPadding = LAYOUT_SETTINGS.ChartYMargin;
+        let yPadding = LAYOUT_SETTINGS.ChartTopMargin + LAYOUT_SETTINGS.ChartBottomMargin;
         let width = svgSelector.offsetWidth - xPadding;
         let height = svgSelector.offsetHeight - yPadding;
-        let marginTop = 40;
+        // let marginTop = 40;
         // adjusts padding to add more space for legend
         if (LEGEND_SETTINGS.LegendPosition == 'bottom' && LEGEND_SETTINGS.LegendToggle) {
             height = this.dimension.height - yPadding;
-            marginTop = 20;
+            // marginTop = 20;
         }
         svg.attr('width', width)
             .attr('height', height)
-            .style('margin-top', `${marginTop}px`)
+            .style('margin-top', `${LAYOUT_SETTINGS.ChartTopMargin}px`)
+            .style('margin-bottom', `${LAYOUT_SETTINGS.ChartBottomMargin}px`)
             .attr('overflow', 'visible');
         // set x axis values
         let x = d3__WEBPACK_IMPORTED_MODULE_0__/* .scaleBand */ .tiA()
@@ -122,15 +130,15 @@ class D3Visual {
         xAxisG.call(xAxis)
             .call(setXAxisGAttr);
         // set y axis value
-        let y = d3__WEBPACK_IMPORTED_MODULE_0__/* .scaleLinear */ .BYU()
+        let y0 = d3__WEBPACK_IMPORTED_MODULE_0__/* .scaleLinear */ .BYU()
             .domain([0, 500])
             .range([height, 0]);
         // set y axis
-        let yAxis = d3__WEBPACK_IMPORTED_MODULE_0__/* .axisLeft */ .y4O(y)
+        let yAxis = d3__WEBPACK_IMPORTED_MODULE_0__/* .axisLeft */ .y4O(y0)
             .tickSize(-width) // draws horizontal gridline across the chart
             .tickFormat(data => {
             // formats y-axis labels with appropriate units
-            return nFormatter(parseInt(data.toString()), 1, Y_AXIS_SETTINGS.DisplayUnits);
+            return nFormatter(parseInt(data.toString()), Y_AXIS_SETTINGS.DisplayDigits, Y_AXIS_SETTINGS.DisplayUnits);
         });
         // set y axis group
         let yAxisG = svg.append('g')
@@ -150,6 +158,39 @@ class D3Visual {
         // render y axis
         yAxisG.call(yAxis.ticks(Y_AXIS_SETTINGS.TickCount))
             .call(setYAxisGAttr);
+        let minVal = SECONDARY_Y_AXIS.MinValue;
+        let maxVal = SECONDARY_Y_AXIS.MaxValue;
+        // setting secondary y axis scale
+        let y1 = d3__WEBPACK_IMPORTED_MODULE_0__/* .scaleLinear */ .BYU()
+            .domain([minVal, maxVal])
+            .range([height, 0]);
+        // set properties
+        let secYAxis = d3__WEBPACK_IMPORTED_MODULE_0__/* .axisRight */ .Khx(y1)
+            .tickFormat(data => {
+            return nFormatter(parseInt(data.toString()), SECONDARY_Y_AXIS.DisplayDigits, SECONDARY_Y_AXIS.DisplayUnits);
+        });
+        // create group
+        let secYAxisG = svg.append('g')
+            .classed('sec-y-axis-g', true)
+            .attr('transform', `translate(${width}, 0)`);
+        // style text
+        let setSecYAxisGAttr = _ => {
+            d3__WEBPACK_IMPORTED_MODULE_0__/* .selectAll */ .td_('.sec-y-axis-g line')
+                .remove();
+            if (SECONDARY_Y_AXIS.ToggleOn) {
+                d3__WEBPACK_IMPORTED_MODULE_0__/* .selectAll */ .td_('.sec-y-axis-g text')
+                    .style('fill', SECONDARY_Y_AXIS.FontColor)
+                    .style('font-family', SECONDARY_Y_AXIS.FontFamily)
+                    .style('font-size', SECONDARY_Y_AXIS.FontSize);
+            }
+            else {
+                d3__WEBPACK_IMPORTED_MODULE_0__/* .selectAll */ .td_('.sec-y-axis-g text')
+                    .style('fill', '#ffffff');
+            }
+        };
+        // render secondary y axis
+        secYAxisG.call(secYAxis.ticks(SECONDARY_Y_AXIS.TickCount))
+            .call(setSecYAxisGAttr);
         // generate stack
         let serieStack = d3__WEBPACK_IMPORTED_MODULE_0__/* .stack */ .knu().keys(_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series */ .FH);
         let stackData = serieStack(_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m);
@@ -157,6 +198,8 @@ class D3Visual {
         // true width gets actual width of chart 
         // useful for secondary growth indicator and legend
         let trueWidth = width + xPadding;
+        // gets current series
+        let currSeries = idx => idx ? FIRST_SERIES : SECOND_SERIES;
         // create legend
         if (LEGEND_SETTINGS.LegendToggle) {
             let legendRectHeight = 15;
@@ -165,6 +208,7 @@ class D3Visual {
             let legend = legendSvg.selectAll('.legend')
                 .data(stackData)
                 .enter()
+                .filter((_, idx) => currSeries(idx).ShowSerie)
                 .append('g')
                 .classed('legend', true);
             // the following code will dynamically position each g element
@@ -229,7 +273,7 @@ class D3Visual {
                 .attr('width', 10)
                 .attr('height', 10)
                 .attr('y', 0)
-                .attr('fill', (_, idx) => idx ? FIRST_SERIES.SerieColor : SECOND_SERIES.SerieColor);
+                .attr('fill', d => currSeries(_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.indexOf */ .FH.indexOf(d.key)).SerieColor);
             // adds legend text
             let legendText = legend.append('text')
                 .attr('x', 15)
@@ -249,153 +293,371 @@ class D3Visual {
                 svg.style('margin-left', `${legendWidth + 40}px`);
             }
         }
+        // hover info text
+        let hoverInfoDiv = d3__WEBPACK_IMPORTED_MODULE_0__/* .select */ .Ys('body')
+            .append('div')
+            .classed('hoverInfoDiv', true)
+            .style('opacity', 0)
+            .style('position', 'absolute')
+            .style('top', 0)
+            .style('color', '#fff')
+            .style('font-size', '11px')
+            .on('mouseover', function () {
+            let selected = d3__WEBPACK_IMPORTED_MODULE_0__/* .select */ .Ys(this);
+            selected.style('display', 'none');
+        });
         let displayUnits = DATA_LABEL_SETTINGS.DisplayUnits;
         let displayDigits = DATA_LABEL_SETTINGS.DisplayDigits;
+        let growthBarOn = false;
         // iterate through each serie stack
         stackData.forEach((serie, idx) => {
-            // create bar
-            let bar = svg.selectAll('.bar')
-                .enter()
-                .data(serie)
-                .join('rect')
-                .classed('bar', true)
-                .attr('fill', idx ? FIRST_SERIES.SerieColor : SECOND_SERIES.SerieColor)
-                .attr('stroke-width', BAR_SETTINGS.BarBorder)
-                .attr('stroke-dasharray', '1,3')
-                .attr('stroke', BAR_SETTINGS.BarBorderColor)
-                .attr('width', x.bandwidth())
-                .attr('x', data => x(data.data.sharedAxis.toString()))
-                .attr('serie', _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series */ .FH[idx])
-                .attr('xIdx', (_, i) => i);
-            // create label on each bar
-            let barLabel = null;
-            if (idx ? FIRST_SERIES.BarLabelToggle : SECOND_SERIES.BarLabelToggle) {
-                barLabel = svg.selectAll('.label')
-                    .data(serie)
+            if (currSeries(idx).ShowSerie) {
+                // create bar
+                let bar = svg.selectAll('.bar')
                     .enter()
-                    .append('text')
+                    .data(serie)
+                    .join('rect')
+                    .classed('bar', true)
+                    .attr('fill', idx ? FIRST_SERIES.SerieColor : SECOND_SERIES.SerieColor)
+                    .attr('stroke-width', 0)
+                    .attr('stroke', BAR_SETTINGS.BarBorderColor)
                     .attr('width', x.bandwidth())
-                    .attr('height', DATA_LABEL_SETTINGS.LabelFontSize)
-                    .attr('fill', idx ? FIRST_SERIES.LabelFontColor : SECOND_SERIES.LabelFontColor)
-                    .attr('font-size', DATA_LABEL_SETTINGS.LabelFontSize)
-                    .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
-                    .attr('text-anchor', 'middle')
-                    .attr('dominant-baseline', 'middle');
-                barLabel.attr('x', data => x(data.data.sharedAxis.toString()));
-            }
-            let yMax = Y_AXIS_SETTINGS.MaxValue;
-            // find local max
-            let localRange = this.getRange().max;
-            // set primary y axis min/max values
-            y.domain([0, yMax ? yMax : localRange * LAYOUT_SETTINGS.YScaleFactor]);
-            yAxisG.call(yAxis)
-                .call(setYAxisGAttr);
-            // removes first label
-            d3__WEBPACK_IMPORTED_MODULE_0__/* .select */ .Ys('.y-axis-g > .tick')
-                .filter((_, i) => i == 0)
-                .remove();
-            // removes border
-            d3__WEBPACK_IMPORTED_MODULE_0__/* .selectAll */ .td_('.domain').remove();
-            let setBarX = data => {
-                if (idx) {
-                    switch (BAR_SETTINGS.BarAlignment) {
-                        case 'center':
-                            return x(data.data.sharedAxis.toString()) + x.bandwidth() / 2 - x.bandwidth() * BAR_SETTINGS.BarPadding / 2;
-                        case 'left':
-                            return x(data.data.sharedAxis.toString());
-                        case 'right':
-                            return x(data.data.sharedAxis.toString()) + x.bandwidth() / 2;
-                        default:
-                            break;
-                    }
+                    .attr('x', data => x(data.data.sharedAxis.toString()))
+                    .attr('serie', _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series */ .FH[idx])
+                    .attr('xIdx', (_, i) => i);
+                // set border line type
+                if (BAR_SETTINGS.BarBorderLineType == 'dashed') {
+                    bar.attr('stroke-dasharray', '4');
                 }
-                else {
-                    return x(data.data.sharedAxis.toString());
+                // display border for series
+                switch (BAR_SETTINGS.DisplayBarBorder) {
+                    case 'both':
+                        bar.attr('stroke-width', BAR_SETTINGS.BarBorderSize);
+                        break;
+                    case 'first':
+                        bar.attr('stroke-width', !idx ? BAR_SETTINGS.BarBorderSize : 0);
+                        break;
+                    case 'second':
+                        bar.attr('stroke-width', idx ? BAR_SETTINGS.BarBorderSize : 0);
+                        break;
+                    default:
+                        break;
                 }
-            };
-            // set bar positions & height
-            bar.data(serie)
-                .attr('x', data => setBarX(data))
-                .attr('width', idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth())
-                // y attr sets starting position from which bar rendered
-                .attr('y', data => y(data[1] - data[0]))
-                // height sets height of rectangle rendered from starting y pos
-                .attr('height', data => y(data[0]) - y(data[1]));
-            // show text if bar height allows and bar labels are toggled on
-            if (idx ? FIRST_SERIES.BarLabelToggle : SECOND_SERIES.BarLabelToggle) {
-                let getLabelText = data => {
-                    // gets data value
-                    let val = data.data[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series */ .FH[idx]];
-                    // gets bar height
-                    let barHeight = y(data[0]) - y(data[1]);
-                    // max allowable text width
-                    let maxTextWidth = x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length + DATA_LABEL_SETTINGS.LabelDisplayTolerance;
-                    val = nFormatter(val, displayDigits, displayUnits);
-                    let textWidth = this.getTextWidth(val, DATA_LABEL_SETTINGS);
-                    if (textWidth > maxTextWidth ||
-                        barHeight <= DATA_LABEL_SETTINGS.LabelFontSize) {
-                        return null;
+                // create label on each bar
+                let barLabel = null;
+                if (idx ? FIRST_SERIES.BarLabelToggle : SECOND_SERIES.BarLabelToggle) {
+                    barLabel = svg.selectAll('.label')
+                        .data(serie)
+                        .enter()
+                        .append('text')
+                        .attr('width', x.bandwidth())
+                        .attr('height', DATA_LABEL_SETTINGS.LabelFontSize)
+                        .attr('fill', idx ? FIRST_SERIES.LabelFontColor : SECOND_SERIES.LabelFontColor)
+                        .attr('font-size', DATA_LABEL_SETTINGS.LabelFontSize)
+                        .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
+                        .attr('text-anchor', 'middle')
+                        .attr('dominant-baseline', 'middle');
+                    barLabel.attr('x', data => x(data.data.sharedAxis.toString()));
+                }
+                let yMax = Y_AXIS_SETTINGS.MaxValue;
+                // find local max
+                let localRange = this.getRange().max;
+                // set primary y axis min/max values
+                y0.domain([0, yMax ? yMax : localRange * LAYOUT_SETTINGS.YScaleFactor]);
+                yAxisG.call(yAxis)
+                    .call(setYAxisGAttr);
+                // removes first label
+                d3__WEBPACK_IMPORTED_MODULE_0__/* .select */ .Ys('.y-axis-g > .tick')
+                    .filter((_, i) => i == 0)
+                    .remove();
+                // removes border
+                d3__WEBPACK_IMPORTED_MODULE_0__/* .selectAll */ .td_('.domain').remove();
+                let setBarX = data => {
+                    if (idx) {
+                        switch (BAR_SETTINGS.BarAlignment) {
+                            case 'center':
+                                return x(data.data.sharedAxis.toString()) + x.bandwidth() / 2 - x.bandwidth() * BAR_SETTINGS.BarPadding / 2;
+                            case 'left':
+                                return x(data.data.sharedAxis.toString());
+                            case 'right':
+                                return x(data.data.sharedAxis.toString()) + x.bandwidth() / 2;
+                            default:
+                                break;
+                        }
                     }
-                    return {
-                        value: val,
-                        width: textWidth
-                    };
+                    else {
+                        return x(data.data.sharedAxis.toString());
+                    }
                 };
-                let labelPos = idx ? FIRST_SERIES.BarLabelPosition : SECOND_SERIES.BarLabelPosition;
-                if (labelPos == 'mid') {
-                    barLabel.text(data => getLabelText(data).value)
-                        .attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
-                        .attr('y', data => height - (y(data[0]) - y(data[1])) / 2);
-                }
-                else if (labelPos == 'top') {
-                    if (idx ? FIRST_SERIES.LabelBgToggle : SECOND_SERIES.LabelBgToggle) {
-                        // background
-                        let bgPadding = 8;
-                        svg.selectAll('.labelBg')
-                            .data(serie)
-                            .enter()
-                            .append('rect')
-                            .attr('width', data => this.getTextWidth((data[1] - data[0]).toString(), DATA_LABEL_SETTINGS) + bgPadding)
-                            .attr('height', DATA_LABEL_SETTINGS.LabelFontSize + bgPadding / 2)
-                            .attr('fill', idx ? FIRST_SERIES.LabelBackgroundColor : SECOND_SERIES.LabelBackgroundColor)
-                            .attr('y', data => y(data[1] - data[0]) - 18)
-                            .attr('x', data => x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
+                // set bar positions & height
+                bar.data(serie)
+                    .attr('x', data => setBarX(data))
+                    .attr('width', idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth())
+                    // y attr sets starting position from which bar rendered
+                    .attr('y', data => y0(data[1] - data[0]))
+                    // height sets height of rectangle rendered from starting y pos
+                    .attr('height', data => y0(data[0]) - y0(data[1]));
+                let hoverBar = function (data) {
+                    let selected = d3__WEBPACK_IMPORTED_MODULE_0__/* .select */ .Ys(this);
+                    let serie = selected.attr('serie');
+                    let xIdxAttr = selected.attr('xIdx');
+                    let xIdx = -1;
+                    try {
+                        xIdx = parseInt(xIdxAttr);
                     }
-                    barLabel.text(data => getLabelText(data).value)
-                        .attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
-                        .attr('y', data => y(data[1] - data[0]) - 10);
+                    catch (e) {
+                        // error converting xidx 
+                        console.error(e);
+                        return;
+                    }
+                    if (xIdx == -1) {
+                        return;
+                    }
+                    let xValue = null;
+                    try {
+                        xValue = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[xIdx].sharedAxis;
+                    }
+                    catch (e) {
+                        // error getting d3data -- index out of bounds or undefined
+                        console.error(e);
+                        return;
+                    }
+                    let eventTarget = d3__WEBPACK_IMPORTED_MODULE_0__/* .event.target */ .Ba6.target;
+                    if (!eventTarget) {
+                        console.error('Unable to get event target');
+                        return;
+                    }
+                    let eventBounds = eventTarget.getBoundingClientRect();
+                    let posX = eventBounds.x;
+                    let posY = eventBounds.y;
+                    let padding = 10;
+                    hoverInfoDiv.transition()
+                        .duration(400)
+                        .style('display', 'block')
+                        .style('opacity', 1)
+                        .style('background-color', 'grey')
+                        .style('padding', padding + 'px');
+                    let summaryText = '';
+                    // reverse to match order of bars
+                    Object.keys(data.data).reverse().forEach(key => {
+                        if (key != 'sharedAxis') {
+                            let text = key + ': ' + nFormatter(data.data[key], displayDigits, displayUnits) + '<br>';
+                            if (key == serie) {
+                                text = '<u>' + text + '</u>';
+                            }
+                            summaryText += text;
+                        }
+                        else {
+                            summaryText += '<br>';
+                        }
+                    });
+                    // text
+                    hoverInfoDiv.html(data.data.sharedAxis +
+                        `<br>` +
+                        summaryText);
+                    let xPosOffset = x.bandwidth() * 1.5;
+                    if (xIdx > (_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data.length */ .$m.length * (2 / 3))) {
+                        xPosOffset = -hoverInfoDiv.node().offsetWidth - (x.bandwidth() / 2);
+                    }
+                    posX += xPosOffset;
+                    // get max top
+                    let body = d3__WEBPACK_IMPORTED_MODULE_0__/* .select */ .Ys('body').node();
+                    let bodyHeight = body.getBoundingClientRect().height;
+                    let maxTop = bodyHeight - hoverInfoDiv.node().offsetHeight;
+                    hoverInfoDiv.style('left', posX + 'px')
+                        .style('top', Math.min(posY, maxTop) + 'px');
+                };
+                // prevent duplicate growth bars
+                if (FIRST_SERIES.ShowSerie) {
+                    growthBarOn = idx ? true : false;
                 }
+                else if (SECOND_SERIES.ShowSerie) {
+                    growthBarOn = idx ? false : true;
+                }
+                // draws red/green rectangles as growth indicators
+                if (GROWTH_BAR_SETTINGS.GrowthRectToggle && growthBarOn) {
+                    _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data.forEach */ .$m.forEach((dataset, xId) => {
+                        let data1 = dataset[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
+                        let data2 = dataset[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
+                        // calculates growth value
+                        let growthValue = (1 - data1 / data2) * 100;
+                        let getXPos = _ => {
+                            if (GROWTH_BAR_SETTINGS.AlignGrowthRect == 'left') {
+                                return x(dataset.sharedAxis);
+                            }
+                            else {
+                                return x(dataset.sharedAxis) + x.bandwidth() * (1 - GROWTH_BAR_SETTINGS.GrowthRectWidth);
+                            }
+                        };
+                        // draws rect
+                        svg.append('rect')
+                            .classed('growth-rect', true)
+                            .attr('xIdx', xId)
+                            .attr('fill', growthValue > 0 ? GROWTH_BAR_SETTINGS.PositiveGrowthColor : GROWTH_BAR_SETTINGS.NegativeGrowthColor)
+                            .attr('width', x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth)
+                            .attr('x', getXPos)
+                            .attr('height', Math.abs(y0(data1) - y0(data2)))
+                            .attr('y', growthValue > 0 ? y0(data2) : y0(data1));
+                        let val = data1 - data2;
+                        if (GROWTH_LABEL_SETTINGS.FlipSign)
+                            val *= -1;
+                        let labelVal = nFormatter(val, GROWTH_LABEL_SETTINGS.DisplayDigits, GROWTH_LABEL_SETTINGS.DisplayUnits);
+                        if (GROWTH_LABEL_SETTINGS.LabelToggle &&
+                            this.getTextWidth(labelVal, GROWTH_LABEL_SETTINGS) < x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth + GROWTH_LABEL_SETTINGS.LabelDisplayTolerance) {
+                            // add text
+                            svg.append('text')
+                                .attr('width', x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth)
+                                .attr('x', getXPos(0) + x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth / 2)
+                                .attr('y', _ => {
+                                if (GROWTH_LABEL_SETTINGS.LabelPosition == 'mid') {
+                                    return (growthValue > 0 ? y0(data2) : y0(data1)) + Math.abs(y0(data1) - y0(data2)) / 2;
+                                }
+                                else {
+                                    return (growthValue > 0 ? y0(data2) : y0(data1)) - 10;
+                                }
+                            })
+                                .attr('fill', GROWTH_LABEL_SETTINGS.FontColor)
+                                .attr('font-size', GROWTH_LABEL_SETTINGS.FontSize)
+                                .attr('font-family', GROWTH_LABEL_SETTINGS.FontFamily)
+                                .attr('text-anchor', 'middle')
+                                .attr('dominant-baseline', 'middle')
+                                .text(labelVal);
+                        }
+                    });
+                    let growthRect = svg.selectAll('.growth-rect').data(serie);
+                    growthRect.on('mouseover', hoverBar)
+                        .on('mouseout', function (_) {
+                        hoverInfoDiv.transition()
+                            .duration(100)
+                            .attr('width', 0)
+                            .attr('height', 0)
+                            .style('opacity', 0);
+                    });
+                }
+                // show text if bar height allows and bar labels are toggled on
+                if (currSeries(idx).BarLabelToggle) {
+                    let getLabelText = data => {
+                        // gets data value
+                        let val = data.data[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series */ .FH[idx]];
+                        // gets bar height
+                        let barHeight = y0(data[0]) - y0(data[1]);
+                        // max allowable text width
+                        let maxTextWidth = x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length + DATA_LABEL_SETTINGS.LabelDisplayTolerance;
+                        val = nFormatter(val, displayDigits, displayUnits);
+                        let textWidth = this.getTextWidth(val, DATA_LABEL_SETTINGS);
+                        if (textWidth > maxTextWidth ||
+                            barHeight <= DATA_LABEL_SETTINGS.LabelFontSize) {
+                            return null;
+                        }
+                        return {
+                            value: val,
+                            width: textWidth
+                        };
+                    };
+                    barLabel.text(data => getLabelText(data).value);
+                    let labelPos = idx ? FIRST_SERIES.BarLabelPosition : SECOND_SERIES.BarLabelPosition;
+                    if (labelPos == 'mid') {
+                        barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                            .attr('y', data => height - (y0(data[0]) - y0(data[1])) / 2);
+                    }
+                    else if (labelPos == 'top') {
+                        if (idx ? FIRST_SERIES.LabelBgToggle : SECOND_SERIES.LabelBgToggle) {
+                            // background
+                            let bgPadding = 4;
+                            svg.selectAll('.labelBg')
+                                .data(serie)
+                                .enter()
+                                .append('rect')
+                                .attr('width', data => getLabelText(data).width + bgPadding)
+                                .attr('height', DATA_LABEL_SETTINGS.LabelFontSize + bgPadding / 2)
+                                .attr('fill', currSeries(idx).LabelBackgroundColor)
+                                .attr('y', data => y0(data[1] - data[0]) - 18)
+                                .attr('x', data => x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
+                        }
+                        // set text and xy pos
+                        barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                            .attr('y', data => y0(data[1] - data[0]) - 10);
+                        // bring to front
+                        barLabel.each(function () {
+                            this.parentNode.appendChild(this);
+                        });
+                    }
+                }
+                bar = svg.selectAll('.bar');
+                // get mouse hover
+                bar.on('mouseover', hoverBar)
+                    .on('mouseout', function (_) {
+                    hoverInfoDiv.transition()
+                        .duration(100)
+                        .attr('width', 0)
+                        .attr('height', 0)
+                        .style('opacity', 0);
+                });
             }
         });
+        // threshold
+        if (LINE_SETTINGS.LineToggle) {
+            let thresholdValue = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .LineValues.reduce */ .VM.reduce((a, b) => a + b, 0);
+            svg.selectAll('.lineValues')
+                .data([_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .LineValues[0] */ .VM[0]])
+                .enter()
+                .append('line')
+                .classed('lineValues', true)
+                .attr('fill', 'none')
+                .attr('stroke', LINE_SETTINGS.LineColor)
+                .attr('stroke-width', LINE_SETTINGS.LineThickness)
+                .attr('x1', 0)
+                .attr('x2', width);
+            // sets axis to align to
+            if (LINE_SETTINGS.LineAlign) {
+                // align secondary y-axis
+                svg.selectAll('.lineValues')
+                    .attr('y1', y1(thresholdValue))
+                    .attr('y2', y1(thresholdValue));
+            }
+            else {
+                // align primary y-axis
+                svg.selectAll('.lineValues')
+                    .attr('y1', y0(thresholdValue))
+                    .attr('y2', y0(thresholdValue));
+            }
+            // sets line type
+            if (LINE_SETTINGS.LineType == 'dashed') {
+                svg.selectAll('.lineValues')
+                    .attr('stroke-dasharray', '5,4');
+            }
+        }
         let heightOffset = PRIMARY_LINE_SETTINGS.LineOffsetHeight;
-        // draw primary growth indicators
-        if (_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length > 1 &&
-            GROWTH_SETTINGS.TogglePrimaryIndicators) {
-            let primarySelectors = GROWTH_SETTINGS.PrimarySelector;
-            let primSel = [];
-            primarySelectors.split(',').forEach(s => primSel.push(s.trim()));
-            let drawPrimaryIndicators = (data1, data2, dataset) => {
-                // if data is not 0 - no point in rendering indicators for a column of 0s
-                if (data1 && data2) {
+        let drawGrowthIndicators = (data1, data2, col1, col2, setting) => {
+            // if data is not 0 - no point in rendering indicators for a column of 0s
+            if (data1 && data2) {
+                if (eval(setting + '_GROWTH_SETTINGS').DisplayLabel == 'top') {
                     try {
                         // initializes coordinate points based on bars selected
-                        let growth1Y = y(data1) - heightOffset;
-                        let growth2Y = y(data2) - heightOffset;
-                        let growth1X = x(dataset.sharedAxis.toString());
-                        let growth2X = x(dataset.sharedAxis.toString()) + x.bandwidth() / 2;
+                        let growth1Y = y0(data1) - heightOffset;
+                        let growth2Y = y0(data2) - heightOffset;
+                        let growth1X, growth2X;
+                        if (setting == 'SECONDARY') {
+                            growth1X = x(col1.sharedAxis.toString()) + x.bandwidth() / 4;
+                            growth2X = x(col2.sharedAxis.toString()) + x.bandwidth() / 4;
+                        }
+                        else {
+                            growth1X = x(col1.sharedAxis.toString());
+                            growth2X = x(col2.sharedAxis.toString()) + x.bandwidth() / 2;
+                        }
                         // sets x position to the center of the bar
                         growth1X += x.bandwidth() / 4;
                         growth2X += x.bandwidth() / 4;
                         let averageX = (growth1X + growth2X) / 2;
                         // represents top border of the chart (excluding legend and other labels), defaults to 0
-                        let maxYPos = y(y.domain()[1]);
+                        let maxYPos = y0(y0.domain()[1]);
                         let yPos = maxYPos;
                         // gets y pos for label
-                        if (!PRIMARY_LINE_SETTINGS.AlignIndicators) {
-                            yPos = Math.min(growth1Y, growth2Y) - PRIMARY_LABEL_SETTINGS.LabelHeight * 2;
+                        if (!eval(setting + '_GROWTH_SETTINGS').AlignIndicators && setting != 'SECONDARY') {
+                            yPos = Math.min(growth1Y, growth2Y) - eval(setting + '_LABEL_SETTINGS').LabelHeight * 2;
                             // ensures yPos does not exceed max, though technically max is actually a min
                             yPos = yPos > maxYPos ? yPos : maxYPos;
-                            yPos -= PRIMARY_LABEL_SETTINGS.LabelOffsetHeight;
+                            yPos -= eval(setting + '_GROWTH_SETTINGS').LabelYOffset;
                         }
                         // draw line
                         let path = d3__WEBPACK_IMPORTED_MODULE_0__/* .line */ .jvg()([
@@ -404,84 +666,57 @@ class D3Visual {
                             [growth2X, yPos],
                             [growth2X, growth2Y]
                         ]);
-                        this.drawLine(path, 'growthLine', PRIMARY_LINE_SETTINGS);
+                        this.drawLine(path, 'growthLine', eval(setting + '_LINE_SETTINGS'));
                         // calculate label text
                         let growthValue = (1 - data1 / data2) * 100;
-                        growthValue = PRIMARY_LABEL_SETTINGS.ShowSign ? growthValue : Math.abs(growthValue);
+                        growthValue = eval(setting + '_LABEL_SETTINGS').ShowSign ? growthValue : Math.abs(growthValue);
                         let growthValueRounded = Math.round(growthValue * 10) / 10 + '%';
                         // draw label background shape
-                        this.drawEllipse(averageX, yPos, growthValueRounded.toString(), PRIMARY_LABEL_SETTINGS);
+                        this.drawEllipse(averageX, yPos, growthValueRounded.toString(), eval(setting + '_LABEL_SETTINGS'));
                         // draw label text
-                        this.drawText(averageX, yPos, PRIMARY_LABEL_SETTINGS, growthValueRounded.toString());
-                        switch (PRIMARY_LINE_SETTINGS.DisplayArrow) {
+                        this.drawText(averageX, yPos, eval(setting + '_LABEL_SETTINGS'), growthValueRounded.toString());
+                        switch (eval(setting + '_LINE_SETTINGS').DisplayArrow) {
                             case 'left':
                                 // draw first arrow
-                                this.drawTriangle(growth1X, growth1Y, PRIMARY_LINE_SETTINGS, 60);
+                                this.drawTriangle(growth1X, growth1Y, eval(setting + '_LINE_SETTINGS'), 60);
                                 break;
                             case 'right':
                                 // draw second arrow
-                                this.drawTriangle(growth2X, growth2Y, PRIMARY_LINE_SETTINGS, 60);
+                                this.drawTriangle(growth2X, growth2Y, eval(setting + '_LINE_SETTINGS'), 60);
                                 break;
                             case 'both':
                                 // draw first arrow
-                                this.drawTriangle(growth1X, growth1Y, PRIMARY_LINE_SETTINGS, 60);
+                                this.drawTriangle(growth1X, growth1Y, eval(setting + '_LINE_SETTINGS'), 60);
                                 // draw second arrow
-                                this.drawTriangle(growth2X, growth2Y, PRIMARY_LINE_SETTINGS, 60);
+                                this.drawTriangle(growth2X, growth2Y, eval(setting + '_LINE_SETTINGS'), 60);
                                 break;
                             default:
                                 break;
                         }
                     }
                     catch (e) {
-                        this.container.innerHTML = "Unable to create primary growth labels";
+                        this.container.innerHTML = 'Unable to create ' + setting.toLowerCase() + ' growth labels';
                     }
                 }
-            };
-            if (primSel[0]) {
-                primSel.forEach(selector => {
-                    if (selector) {
-                        let data1 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
-                        let data2 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
-                        drawPrimaryIndicators(data1, data2, _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)]);
-                    }
-                });
-            }
-            else {
-                _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data.forEach */ .$m.forEach(dataset => {
-                    // gets corresponding serie data based on selectors
-                    let data1 = dataset[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
-                    let data2 = dataset[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
-                    drawPrimaryIndicators(data1, data2, dataset);
-                });
-            }
-        }
-        // adds secondary growth indicator
-        if (_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length > 1 &&
-            GROWTH_SETTINGS.ToggleSecondaryIndicator) {
-            let secondarySelectors = GROWTH_SETTINGS.SecondarySelector;
-            let secSel = [];
-            secondarySelectors.split(',').forEach(s => secSel.push(s.trim()));
-            let drawSecondaryIndicators = (data1, data2, dataset) => {
-                // if data is not 0 - no point in rendering indicators for a column of 0s
-                if (data1 && data2) {
+                else {
                     try {
                         // initializes coordinate points based on bars selected
-                        let growth1Y = y(data1);
-                        let growth2Y = y(data2);
+                        let growth1Y = y0(data1);
+                        let growth2Y = y0(data2);
                         let averageY = (growth2Y + growth1Y) / 2;
                         // calculates starting x positions for line, defaults to right corner of bar
-                        let growth1X = x(dataset.sharedAxis.toString());
-                        let growth2X = x(dataset.sharedAxis.toString());
+                        let growth1X = x(col1.sharedAxis.toString());
+                        let growth2X = x(col2.sharedAxis.toString());
                         // calculates x pos for label
-                        let xPos = Math.min(growth2X, growth1X) - SECONDARY_LABEL_SETTINGS.xOffset;
+                        let xPos = Math.min(growth2X, growth1X) - eval(setting + '_GROWTH_SETTINGS').LabelXOffset;
                         // ensures x pos does not exceed width
                         xPos = xPos < 0 ? 0 : xPos;
-                        if (SECONDARY_LABEL_SETTINGS.DisplaySide == 'right') {
+                        if (eval(setting + '_GROWTH_SETTINGS').DisplaySide == 'right') {
                             // adds offset to account for bar width
                             growth1X += x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length;
                             growth2X += x.bandwidth() / _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length;
                             // gets desired x position
-                            xPos = Math.max(growth2X, growth1X) + SECONDARY_LABEL_SETTINGS.xOffset;
+                            xPos = Math.max(growth2X, growth1X) + eval(setting + '_GROWTH_SETTINGS').LabelXOffset;
                             // ensures x pos does not exceed width
                             xPos = xPos < trueWidth ? xPos : trueWidth;
                         }
@@ -492,50 +727,58 @@ class D3Visual {
                             [xPos, growth2Y],
                             [growth2X, growth2Y]
                         ]);
-                        this.drawLine(path, 'growthLineValues', SECONDARY_LINE_SETTINGS);
+                        this.drawLine(path, 'growthLineValues', eval(setting + '_LINE_SETTINGS'));
                         // sets line type
-                        if (SECONDARY_LINE_SETTINGS.LineType == 'dashed') {
+                        if (eval(setting + '_LINE_SETTINGS').LineType == 'dashed') {
                             svg.selectAll('.growthLineValues')
                                 .attr('stroke-dasharray', '5,4');
                         }
                         // calculate label text
                         let growthValue = (1 - data1 / data2) * 100;
-                        growthValue = SECONDARY_LABEL_SETTINGS.ShowSign ? growthValue : Math.abs(growthValue);
+                        growthValue = eval(setting + '_LABEL_SETTINGS').ShowSign ? growthValue : Math.abs(growthValue);
                         let growthValueRounded = Math.round(growthValue * 10) / 10 + '%';
                         // draw label background shape
-                        this.drawEllipse(xPos, averageY, growthValueRounded.toString(), SECONDARY_LABEL_SETTINGS);
+                        this.drawEllipse(xPos, averageY, growthValueRounded.toString(), eval(setting + '_LABEL_SETTINGS'));
                         // draw label text
-                        this.drawText(xPos, averageY, SECONDARY_LABEL_SETTINGS, growthValueRounded.toString());
-                        switch (SECONDARY_LINE_SETTINGS.DisplayArrow) {
+                        this.drawText(xPos, averageY, eval(setting + '_LABEL_SETTINGS'), growthValueRounded.toString());
+                        switch (eval(setting + '_LINE_SETTINGS').DisplayArrow) {
                             case 'left':
                                 // draw first arrow
-                                this.drawTriangle(growth1X, growth1Y, SECONDARY_LINE_SETTINGS, 30);
+                                this.drawTriangle(growth1X, growth1Y, eval(setting + '_LINE_SETTINGS'), 30);
                                 break;
                             case 'right':
                                 // draw second arrow
-                                this.drawTriangle(growth2X, growth2Y, SECONDARY_LINE_SETTINGS, 30);
+                                this.drawTriangle(growth2X, growth2Y, eval(setting + '_LINE_SETTINGS'), 30);
                                 break;
                             case 'both':
                                 // draw first arrow
-                                this.drawTriangle(growth1X, growth1Y, SECONDARY_LINE_SETTINGS, 30);
+                                this.drawTriangle(growth1X, growth1Y, eval(setting + '_LINE_SETTINGS'), 30);
                                 // draw second arrow
-                                this.drawTriangle(growth2X, growth2Y, SECONDARY_LINE_SETTINGS, 30);
+                                this.drawTriangle(growth2X, growth2Y, eval(setting + '_LINE_SETTINGS'), 30);
                                 break;
                             default:
                                 break;
                         }
                     }
                     catch (e) {
-                        this.container.innerHTML = "Unable to create secondary growth labels";
+                        this.container.innerHTML = 'Unable to create ' + setting.toLowerCase() + ' growth labels';
                     }
                 }
-            };
-            if (secSel[0]) {
-                secSel.forEach(selector => {
+            }
+        };
+        // draw primary growth indicators
+        if (_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series.length */ .FH.length > 1 &&
+            PRIMARY_GROWTH_SETTINGS.TogglePrimaryIndicators) {
+            let primarySelectors = PRIMARY_GROWTH_SETTINGS.Selector;
+            let primSel = [];
+            primarySelectors.split(',').forEach(s => primSel.push(s.trim()));
+            if (primSel[0]) {
+                primSel.forEach(selector => {
                     if (selector) {
-                        let data1 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
-                        let data2 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
-                        drawSecondaryIndicators(data1, data2, _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)]);
+                        let col = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[this.getIndex(selector)];
+                        let data1 = col[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
+                        let data2 = col[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
+                        drawGrowthIndicators(data1, data2, col, col, 'PRIMARY');
                     }
                 });
             }
@@ -544,9 +787,94 @@ class D3Visual {
                     // gets corresponding serie data based on selectors
                     let data1 = dataset[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[0] */ .FH[0]];
                     let data2 = dataset[_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
-                    drawSecondaryIndicators(data1, data2, dataset);
+                    drawGrowthIndicators(data1, data2, dataset, dataset, 'PRIMARY');
                 });
             }
+        }
+        // adds secondary growth indicator
+        if (SECONDARY_GROWTH_SETTINGS.ToggleSecondaryIndicator) {
+            // creates default selector, sets to most recent non-zero column
+            let lastIdx = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data.length */ .$m.length - 1;
+            let lastVal = 0;
+            // iterates over columns starting from last column, returns first-from-last non-zero column
+            while (lastIdx >= 0) {
+                lastVal = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[lastIdx][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
+                if (lastVal)
+                    break;
+                lastIdx--;
+            }
+            // finds equivalent growth selector for returned non-zero column
+            let lastSelect = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[lastIdx].sharedAxis;
+            // get growth selectors
+            let select1 = SECONDARY_GROWTH_SETTINGS.Selector1;
+            let select2 = SECONDARY_GROWTH_SETTINGS.Selector2;
+            // define serie index and sum
+            let growth2Val = 0;
+            let growth2Idx = -1;
+            // finds second growth selector if growth selector is specified, otherwise, use default value
+            if (select2) {
+                growth2Idx = this.getIndex(select2);
+                growth2Val = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[growth2Idx][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
+            }
+            else {
+                growth2Idx = lastIdx;
+                growth2Val = lastVal;
+                select2 = lastSelect;
+            }
+            let growth1Val = 0;
+            let growth1Idx = -1;
+            // finds first growth selector
+            if (select1) {
+                growth1Idx = this.getIndex(select1);
+                growth1Val = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[growth1Idx][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
+            }
+            else {
+                // gets shortened month ex Jan
+                let month = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Columns */ .oe[growth2Idx].toLowerCase().slice(0, 3);
+                // gets shortened year ex 21
+                let year = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Columns */ .oe[growth2Idx].slice(4);
+                // gets array of month names
+                let months = [];
+                _interfaces__WEBPACK_IMPORTED_MODULE_2__/* .MonthNames.forEach */ .y.forEach(month => {
+                    months.push(month.toLowerCase().slice(0, 3));
+                });
+                // if 12-month prev == 0 find next closest available non-zero month, starting from 12-month prev and incrementing
+                growth1Idx = growth2Idx - 12 < 0 ? 0 : growth2Idx - 12;
+                // check if format is valid
+                // month must exist
+                /// year must be a number
+                if (months.indexOf(month) > -1 && +year) {
+                    // gets year
+                    year = parseInt(year) - 1;
+                    // sets column name
+                    let col = month.charAt(0).toUpperCase() + month.slice(1) + '-' + year.toString();
+                    // finds 13 month range
+                    let rangeExists = false;
+                    for (let monthIdx = months.indexOf(month); monthIdx < 12; monthIdx++) {
+                        if (_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Columns */ .oe[growth1Idx] != col) {
+                            growth1Idx++;
+                        }
+                        else {
+                            rangeExists = true;
+                            break;
+                        }
+                    }
+                    // reset index 
+                    if (!rangeExists) {
+                        growth1Idx = 0;
+                    }
+                }
+                // gets first non-zero column
+                while (growth1Idx < _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Columns.length */ .oe.length) {
+                    growth1Val = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[growth1Idx][_dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Series[1] */ .FH[1]];
+                    if (growth1Val)
+                        break;
+                    growth1Idx++;
+                }
+                // sets selector
+                select1 = _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .Columns */ .oe[growth1Idx];
+            }
+            drawGrowthIndicators(growth1Val, growth2Val, _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[growth1Idx], _dataProcess__WEBPACK_IMPORTED_MODULE_1__/* .D3Data */ .$m[growth2Idx], 'SECONDARY');
         }
     }
     // gets range of data
@@ -708,18 +1036,22 @@ function nFormatter(num, digits, displayUnits) {
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "$m": () => (/* binding */ D3Data),
 /* harmony export */   "FH": () => (/* binding */ Series),
-/* harmony export */   "Jl": () => (/* binding */ transformData)
+/* harmony export */   "Jl": () => (/* binding */ transformData),
+/* harmony export */   "VM": () => (/* binding */ LineValues),
+/* harmony export */   "oe": () => (/* binding */ Columns)
 /* harmony export */ });
-/* unused harmony exports DataNumeric, Columns, calculateNumerics */
+/* unused harmony exports DataNumeric, calculateNumerics */
 /* harmony import */ var _interfaces__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(63003);
 
+let LineValues = [];
 let Series = [];
 let DataNumeric;
 let D3Data = [];
-let Columns = (/* unused pure expression or super */ null && ([]));
+let Columns = [];
 function transformData(dataView) {
     // reset global var data
     // reset
+    LineValues = [];
     Series = [];
     D3Data = [];
     DataNumeric = {
@@ -781,6 +1113,14 @@ function transformData(dataView) {
         });
         D3Data.push(data);
     }
+    // get threshold
+    series.forEach(serie => {
+        serie.values.forEach(val => {
+            if (Object.keys(val.source.roles)[0] == 'Line Values') {
+                LineValues.push(val.values[0]);
+            }
+        });
+    });
     // console.log(D3Data)
     // remove any columns with null or empty name
     D3Data.forEach((data, idx) => {
@@ -844,7 +1184,7 @@ let MonthNames = ["January", "February", "March", "April", "May", "June", "July"
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "Jx": () => (/* binding */ VisualSettings)
 /* harmony export */ });
-/* unused harmony exports LayoutSettings, BarSettings, XAxisSettings, YAxisSettings, DataColors, Serie2Settings, Serie1Settings, DataLabelSettings, LegendSettings, GrowthSettings, PrimaryLabelSettings, PrimaryLineSettings, SecondaryLabelSettings, SecondaryLineSettings */
+/* unused harmony exports LayoutSettings, BarSettings, LineSettings, XAxisSettings, YAxisSettings, SecondaryYAxis, DataColors, Serie2Settings, Serie1Settings, DataLabelSettings, LegendSettings, GrowthBarSettings, GrowthLabelSettings, PrimaryGrowthSettings, PrimaryLabelSettings, PrimaryLineSettings, SecondaryGrowthSettings, SecondaryLabelSettings, SecondaryLineSettings */
 /* harmony import */ var powerbi_visuals_utils_dataviewutils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(24554);
 /*
  *  Power BI Visualizations
@@ -880,23 +1220,29 @@ class VisualSettings extends DataViewObjectsParser {
         this.XAxisSettings = new XAxisSettings();
         this.YAxisSettings = new YAxisSettings();
         this.DataLabelSettings = new DataLabelSettings();
-        this.GrowthSettings = new GrowthSettings();
         this.LayoutSettings = new LayoutSettings();
         this.BarSettings = new BarSettings();
+        this.GrowthBarSettings = new GrowthBarSettings();
+        this.GrowthLabelSettings = new GrowthLabelSettings();
         this.Serie2Settings = new Serie2Settings();
         this.Serie1Settings = new Serie1Settings();
         this.LegendSettings = new LegendSettings();
+        this.LineSettings = new LineSettings();
+        this.PrimaryGrowthSettings = new PrimaryGrowthSettings();
         this.PrimaryLabelSettings = new PrimaryLabelSettings();
         this.PrimaryLineSettings = new PrimaryLineSettings();
+        this.SecondaryGrowthSettings = new SecondaryGrowthSettings();
         this.SecondaryLabelSettings = new SecondaryLabelSettings();
         this.SecondaryLineSettings = new SecondaryLineSettings();
+        this.SecondaryYAxis = new SecondaryYAxis();
     }
 }
 // initializes default values for all settings
 class LayoutSettings {
     constructor() {
         this.ChartXMargin = 85;
-        this.ChartYMargin = 70;
+        this.ChartTopMargin = 35;
+        this.ChartBottomMargin = 35;
         this.XAxisBarWhiteSpace = 0.3;
         this.YScaleFactor = 1.3;
     }
@@ -905,9 +1251,19 @@ class BarSettings {
     constructor() {
         this.BarAlignment = 'center';
         this.BarPadding = 0.7;
-        this.BarBorder = true;
-        this.BarBorderSize = 3;
+        this.DisplayBarBorder = 'none';
+        this.BarBorderSize = 2;
         this.BarBorderColor = '#666666';
+        this.BarBorderLineType = 'dashed';
+    }
+}
+class LineSettings {
+    constructor() {
+        this.LineToggle = true;
+        this.LineAlign = false;
+        this.LineThickness = 1;
+        this.LineColor = '#FF0000';
+        this.LineType = 'dashed';
     }
 }
 class XAxisSettings {
@@ -923,9 +1279,23 @@ class XAxisSettings {
 class YAxisSettings {
     constructor() {
         this.DisplayUnits = 'auto';
+        this.DisplayDigits = 1;
         this.MaxValue = 0;
         this.TickCount = 3;
         this.ToggleGridLines = true;
+        this.FontFamily = 'Calibri';
+        this.FontColor = '#666666';
+        this.FontSize = 10;
+    }
+}
+class SecondaryYAxis {
+    constructor() {
+        this.ToggleOn = false;
+        this.MinValue = 0;
+        this.MaxValue = 0;
+        this.DisplayUnits = 'auto';
+        this.DisplayDigits = 1;
+        this.TickCount = 3;
         this.FontFamily = 'Calibri';
         this.FontColor = '#666666';
         this.FontSize = 10;
@@ -939,7 +1309,7 @@ class DataColors {
 }
 class Serie2Settings {
     constructor() {
-        this.SerieColor = '#118DFF';
+        this.SerieColor = '#B3B3B3';
         this.ShowSerie = true;
         this.BarLabelToggle = true;
         this.LabelBgToggle = false;
@@ -950,7 +1320,7 @@ class Serie2Settings {
 }
 class Serie1Settings {
     constructor() {
-        this.SerieColor = '#12239E';
+        this.SerieColor = '#333333';
         this.ShowSerie = true;
         this.BarLabelToggle = true;
         this.LabelFontColor = '#000000';
@@ -978,12 +1348,37 @@ class LegendSettings {
         this.FontSize = 13;
     }
 }
-class GrowthSettings {
+class GrowthBarSettings {
     constructor() {
+        this.GrowthRectToggle = false;
+        this.PositiveGrowthColor = '#2dcc4d';
+        this.NegativeGrowthColor = '#e31426';
+        this.AlignGrowthRect = 'left';
+        this.GrowthRectWidth = 0.7;
+    }
+}
+class GrowthLabelSettings {
+    constructor() {
+        this.LabelToggle = true;
+        this.LabelPosition = 'top';
+        this.DisplayUnits = 'auto';
+        this.DisplayDigits = 1;
+        this.FontColor = '#000000';
+        this.FontFamily = 'Calibri';
+        this.FontSize = 10;
+        this.LabelDisplayTolerance = 10;
+        this.FlipSign = false;
+    }
+}
+class PrimaryGrowthSettings {
+    constructor() {
+        this.Selector = '';
         this.TogglePrimaryIndicators = true;
-        this.ToggleSecondaryIndicator = true;
-        this.PrimarySelector = '';
-        this.SecondarySelector = '';
+        this.DisplayLabel = 'side';
+        this.DisplaySide = 'right';
+        this.AlignIndicators = false;
+        this.LabelYOffset = 0;
+        this.LabelXOffset = 40;
     }
 }
 class PrimaryLabelSettings {
@@ -994,7 +1389,6 @@ class PrimaryLabelSettings {
         this.FontSize = 11;
         this.BorderColor = '#808080';
         this.BorderSize = 1;
-        this.LabelOffsetHeight = 0;
         this.LabelHeight = 10;
         this.LabelMinWidth = 20;
         this.ShowSign = true;
@@ -1003,18 +1397,26 @@ class PrimaryLabelSettings {
 }
 class PrimaryLineSettings {
     constructor() {
-        this.AlignIndicators = false;
         this.LineColor = '#808080';
         this.LineOffsetHeight = 25;
         this.LineSize = 1;
+        this.LineType = 'dashed';
         this.ArrowSize = 20;
         this.DisplayArrow = 'both';
     }
 }
+class SecondaryGrowthSettings {
+    constructor() {
+        this.ToggleSecondaryIndicator = true;
+        this.Selector1 = '';
+        this.Selector2 = '';
+        this.DisplayLabel = 'top';
+        this.DisplaySide = 'right';
+        this.LabelXOffset = 40;
+    }
+}
 class SecondaryLabelSettings {
     constructor() {
-        this.DisplaySide = 'right';
-        this.xOffset = 40;
         this.LabelBackgroundColor = '#ffffff';
         this.BorderColor = '#808080';
         this.BorderSize = 1;
@@ -1030,10 +1432,11 @@ class SecondaryLabelSettings {
 class SecondaryLineSettings {
     constructor() {
         this.LineColor = '#808080';
-        this.LineType = 'dashed';
+        this.LineOffsetHeight = 25;
+        this.LineType = 'solid';
         this.LineSize = 1;
         this.ArrowSize = 20;
-        this.DisplayArrow = 'none';
+        this.DisplayArrow = 'both';
     }
 }
 
@@ -18192,10 +18595,11 @@ var slice = Array.prototype.slice;
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Kh": () => (/* binding */ axisRight),
 /* harmony export */   "LL": () => (/* binding */ axisBottom),
 /* harmony export */   "y4": () => (/* binding */ axisLeft)
 /* harmony export */ });
-/* unused harmony exports axisTop, axisRight */
+/* unused harmony export axisTop */
 /* harmony import */ var _array__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(94844);
 /* harmony import */ var _identity__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(39985);
 
@@ -18395,6 +18799,7 @@ function axisLeft(scale) {
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "Kh": () => (/* reexport safe */ _axis__WEBPACK_IMPORTED_MODULE_0__.Kh),
 /* harmony export */   "LL": () => (/* reexport safe */ _axis__WEBPACK_IMPORTED_MODULE_0__.LL),
 /* harmony export */   "y4": () => (/* reexport safe */ _axis__WEBPACK_IMPORTED_MODULE_0__.y4)
 /* harmony export */ });
@@ -23879,11 +24284,13 @@ function creatorFixed(fullname) {
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "B": () => (/* reexport safe */ _selection_on__WEBPACK_IMPORTED_MODULE_2__.B),
 /* harmony export */   "Ys": () => (/* reexport safe */ _select__WEBPACK_IMPORTED_MODULE_0__.Z),
 /* harmony export */   "td": () => (/* reexport safe */ _selectAll__WEBPACK_IMPORTED_MODULE_1__.Z)
 /* harmony export */ });
 /* harmony import */ var _select__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(94017);
 /* harmony import */ var _selectAll__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(19628);
+/* harmony import */ var _selection_on__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(25109);
 
 
 
@@ -24824,9 +25231,10 @@ function lower() {
 
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "B": () => (/* binding */ event),
 /* harmony export */   "ZP": () => (/* export default binding */ __WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* unused harmony exports event, customEvent */
+/* unused harmony export customEvent */
 var filterEvents = {};
 
 var event = null;
@@ -29021,6 +29429,8 @@ var dependencies = {"d3-array":"1","d3-axis":"1","d3-brush":"1","d3-chord":"1","
 "use strict";
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "BYU": () => (/* reexport safe */ d3_scale__WEBPACK_IMPORTED_MODULE_9__.BY),
+/* harmony export */   "Ba6": () => (/* reexport safe */ d3_selection__WEBPACK_IMPORTED_MODULE_10__.B),
+/* harmony export */   "Khx": () => (/* reexport safe */ d3_axis__WEBPACK_IMPORTED_MODULE_2__.Kh),
 /* harmony export */   "LLu": () => (/* reexport safe */ d3_axis__WEBPACK_IMPORTED_MODULE_2__.LL),
 /* harmony export */   "NAG": () => (/* reexport safe */ d3_shape__WEBPACK_IMPORTED_MODULE_11__.NA),
 /* harmony export */   "P67": () => (/* reexport safe */ d3_shape__WEBPACK_IMPORTED_MODULE_11__.P6),

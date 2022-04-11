@@ -11,6 +11,11 @@
             "kind": "Grouping"
         },
         {
+            "name": "Line Values",
+            "displayName": "Line Values",
+            "kind": "Measure"
+        },
+        {
             "name": "Column Values",
             "displayName": "Column Values",
             "kind": "Measure"
@@ -25,6 +30,10 @@
                         "max": 1
                     },
                     "Column Series": {
+                        "min": 0,
+                        "max": 1
+                    },
+                    "Line Values": {
                         "min": 0,
                         "max": 1
                     },
@@ -48,6 +57,11 @@
                                 "for": {
                                     "in": "Column Values"
                                 }
+                            },
+                            {
+                                "for": {
+                                    "in": "Line Values"
+                                }
                             }
                         ]
                     }
@@ -65,8 +79,14 @@
                         "numeric": true
                     }
                 },
-                "ChartYMargin": {
-                    "displayName": "Chart Vertical Margin",
+                "ChartTopMargin": {
+                    "displayName": "Chart Margin Top",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "ChartBottomMargin": {
+                    "displayName": "Chart Margin Bottom",
                     "type": {
                         "numeric": true
                     }
@@ -141,6 +161,12 @@
                         "numeric": true
                     }
                 },
+                "DisplayDigits": {
+                    "displayName": "Displayed Decimal Places",
+                    "type": {
+                        "numeric": true
+                    }
+                },
                 "DisplayUnits": {
                     "displayName": "Display Units",
                     "type": {
@@ -210,6 +236,144 @@
                 }
             }
         },
+        "SecondaryYAxis": {
+            "displayName": "Secondary Y-Axis",
+            "properties": {
+                "ToggleOn": {
+                    "displayName": "Show Axis Labels",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "MinValue": {
+                    "displayName": "Min Value",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "MaxValue": {
+                    "displayName": "Max Value",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "TickCount": {
+                    "displayName": "Axis Tick Count",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "DisplayDigits": {
+                    "displayName": "Displayed Decimal Places",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "DisplayUnits": {
+                    "displayName": "Display Units",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "auto",
+                                "displayName": "Auto"
+                            },
+                            {
+                                "value": "none",
+                                "displayName": "None"
+                            },
+                            {
+                                "value": "thousands",
+                                "displayName": "Thousands"
+                            },
+                            {
+                                "value": "millions",
+                                "displayName": "Millions"
+                            },
+                            {
+                                "value": "billions",
+                                "displayName": "Billions"
+                            },
+                            {
+                                "value": "trillions",
+                                "displayName": "Trillions"
+                            }
+                        ]
+                    }
+                },
+                "FontFamily": {
+                    "displayName": "Font Family",
+                    "type": {
+                        "formatting": {
+                            "fontFamily": true
+                        }
+                    }
+                },
+                "FontColor": {
+                    "displayName": "Font Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "FontSize": {
+                    "displayName": "Font Size",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
+        "LineSettings": {
+            "displayName": "Line Settings",
+            "properties": {
+                "LineToggle": {
+                    "displayName": "Show Line",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "LineAlign": {
+                    "displayName": "Align to Secondary Y-Axis",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "LineThickness": {
+                    "displayName": "Line Thickness",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "LineColor": {
+                    "displayName": "Line Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "LineType": {
+                    "displayName": "Line Type",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "dashed",
+                                "displayName": "Dashed"
+                            },
+                            {
+                                "value": "solid",
+                                "displayName": "Solid"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
         "BarSettings": {
             "displayName": "Bar Settings",
             "properties": {
@@ -238,10 +402,27 @@
                         "numeric": true
                     }
                 },
-                "BarBorder": {
+                "DisplayBarBorder": {
                     "displayName": "Bar Border",
                     "type": {
-                        "bool": true
+                        "enumeration": [
+                            {
+                                "displayName": "First series only",
+                                "value": "first"
+                            },
+                            {
+                                "displayName": "Second series only",
+                                "value": "second"
+                            },
+                            {
+                                "displayName": "Both series",
+                                "value": "both"
+                            },
+                            {
+                                "displayName": "Neither",
+                                "value": "none"
+                            }
+                        ]
                     }
                 },
                 "BarBorderSize": {
@@ -258,6 +439,21 @@
                                 "color": true
                             }
                         }
+                    }
+                },
+                "BarBorderLineType": {
+                    "displayName": "Bar Border Line Type",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "dashed",
+                                "displayName": "Dashed"
+                            },
+                            {
+                                "value": "solid",
+                                "displayName": "Solid"
+                            }
+                        ]
                     }
                 }
             }
@@ -520,31 +716,218 @@
                 }
             }
         },
-        "GrowthSettings": {
-            "displayName": "Growth Selectors",
+        "GrowthBarSettings": {
+            "displayName": "Growth Bars",
             "properties": {
+                "GrowthRectToggle": {
+                    "displayName": "Show Growth Bars",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "PositiveGrowthColor": {
+                    "displayName": "Positive Growth Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "NegativeGrowthColor": {
+                    "displayName": "Negative Growth Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "AlignGrowthRect": {
+                    "displayName": "Align Growth Bars",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "displayName": "Left",
+                                "value": "left"
+                            },
+                            {
+                                "displayName": "Right",
+                                "value": "right"
+                            }
+                        ]
+                    }
+                },
+                "GrowthRectWidth": {
+                    "displayName": "Growth Bar Width",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
+        "GrowthLabelSettings": {
+            "displayName": "Growth Labels",
+            "properties": {
+                "GrowthLabelToggle": {
+                    "displayName": "Show Growth Labels",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "LabelPosition": {
+                    "displayName": "Bar Label Position",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "displayName": "Middle",
+                                "value": "mid"
+                            },
+                            {
+                                "displayName": "Top",
+                                "value": "top"
+                            }
+                        ]
+                    }
+                },
+                "DisplayDigits": {
+                    "displayName": "Displayed Decimal Places",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "DisplayUnits": {
+                    "displayName": "Display Units",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "auto",
+                                "displayName": "Auto"
+                            },
+                            {
+                                "value": "none",
+                                "displayName": "None"
+                            },
+                            {
+                                "value": "thousands",
+                                "displayName": "Thousands"
+                            },
+                            {
+                                "value": "millions",
+                                "displayName": "Millions"
+                            },
+                            {
+                                "value": "billions",
+                                "displayName": "Billions"
+                            },
+                            {
+                                "value": "trillions",
+                                "displayName": "Trillions"
+                            }
+                        ]
+                    }
+                },
+                "FontColor": {
+                    "displayName": "Font Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "FontFamily": {
+                    "displayName": "Font Family",
+                    "type": {
+                        "formatting": {
+                            "fontFamily": true
+                        }
+                    }
+                },
+                "FontSize": {
+                    "displayName": "Label Font Size",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "LabelDisplayTolerance": {
+                    "displayName": "Label Display Tolerance",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "FlipSign": {
+                    "displayName": "Flip +/- Sign",
+                    "type": {
+                        "bool": true
+                    }
+                }
+            }
+        },
+        "PrimaryGrowthSettings": {
+            "displayName": "Primary Growth Indicators",
+            "properties": {
+                "Selector": {
+                    "displayName": "Primary Selector",
+                    "type": {
+                        "text": true
+                    }
+                },
                 "TogglePrimaryIndicators": {
                     "displayName": "Show Primary Growth Indicators",
                     "type": {
                         "bool": true
                     }
                 },
-                "ToggleSecondaryIndicator": {
-                    "displayName": "Show Secondary Growth Indicator",
+                "AlignIndicators": {
+                    "displayName": "Align Primary Indicators",
                     "type": {
                         "bool": true
                     }
                 },
-                "PrimarySelector": {
-                    "displayName": "Primary Selector",
+                "DisplaySide": {
+                    "displayName": "Display Side",
                     "type": {
-                        "text": true
+                        "enumeration": [
+                            {
+                                "value": "right",
+                                "displayName": "Right of bar"
+                            },
+                            {
+                                "value": "left",
+                                "displayName": "Left of bar"
+                            }
+                        ]
                     }
                 },
-                "SecondarySelector": {
-                    "displayName": "Secondary Selector",
+                "DisplayLabel": {
+                    "displayName": "Display Label",
                     "type": {
-                        "text": true
+                        "enumeration": [
+                            {
+                                "value": "top",
+                                "displayName": "Above the bar"
+                            },
+                            {
+                                "value": "side",
+                                "displayName": "Beside the Bar"
+                            }
+                        ]
+                    }
+                },
+                "LabelYOffset": {
+                    "displayName": "Label Y Offset",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "LabelXOffset": {
+                    "displayName": "Label X Offset",
+                    "type": {
+                        "numeric": true
                     }
                 }
             }
@@ -560,12 +943,6 @@
                                 "color": true
                             }
                         }
-                    }
-                },
-                "LabelOffsetHeight": {
-                    "displayName": "Label Offset Height",
-                    "type": {
-                        "numeric": true
                     }
                 },
                 "BorderColor": {
@@ -696,9 +1073,27 @@
                 }
             }
         },
-        "SecondaryLabelSettings": {
-            "displayName": "Secondary Growth Labels",
+        "SecondaryGrowthSettings": {
+            "displayName": "Secondary Growth Indicators",
             "properties": {
+                "Selector1": {
+                    "displayName": "First Selector",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "Selector2": {
+                    "displayName": "Second Selector",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "ToggleSecondaryIndicator": {
+                    "displayName": "Show Secondary Growth Indicator",
+                    "type": {
+                        "bool": true
+                    }
+                },
                 "DisplaySide": {
                     "displayName": "Display Side",
                     "type": {
@@ -714,6 +1109,32 @@
                         ]
                     }
                 },
+                "DisplayLabel": {
+                    "displayName": "Display Label",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "top",
+                                "displayName": "Above the bar"
+                            },
+                            {
+                                "value": "side",
+                                "displayName": "Beside the Bar"
+                            }
+                        ]
+                    }
+                },
+                "LabelXOffset": {
+                    "displayName": "Label X Offset",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
+        "SecondaryLabelSettings": {
+            "displayName": "Secondary Growth Labels",
+            "properties": {
                 "LabelBackgroundColor": {
                     "displayName": "Label Background Color",
                     "type": {
@@ -722,12 +1143,6 @@
                                 "color": true
                             }
                         }
-                    }
-                },
-                "xOffset": {
-                    "displayName": "Horizontal Offset",
-                    "type": {
-                        "numeric": true
                     }
                 },
                 "FontColor": {

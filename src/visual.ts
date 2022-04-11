@@ -41,7 +41,6 @@ import DataViewObjects = powerbi.DataViewObjects;
 import DataViewObject = powerbi.DataViewObject;
 import DataViewValueColumnGroup = powerbi.DataViewValueColumnGroup;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
-import colorPalette = powerbi.extensibility.ISandboxExtendedColorPalette;
 
 import * as dp from './dataProcess';
 import * as d3 from 'd3';

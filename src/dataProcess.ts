@@ -4,6 +4,7 @@ import DataView = powerbi.DataView;
 import PrimitiveValue = powerbi.PrimitiveValue;
 import DataViewValueColumnGroup = powerbi.DataViewValueColumnGroup;
 
+export let LineValues: number[] = [];
 export let Series: string[] = [];
 export let DataNumeric: Interfaces.Numeric;
 
@@ -15,6 +16,7 @@ export let Columns = [];
 export function transformData(dataView: DataView): void {
     // reset global var data
     // reset
+    LineValues = [];
     Series = [];
     D3Data = []
     DataNumeric = {
@@ -29,8 +31,8 @@ export function transformData(dataView: DataView): void {
         return;
     }
 
-    if (!dataView.categorical || 
-        !dataView.categorical.categories || 
+    if (!dataView.categorical ||
+        !dataView.categorical.categories ||
         !dataView.categorical.values ||
         !dataView.categorical.values.source) {
 
@@ -46,24 +48,24 @@ export function transformData(dataView: DataView): void {
     let format = columnSource.format;
     columns = columns.map(col => { // loops through every data point in the initial dataset
         col = col ?? '';
-        
+
         // formats the data value to month-year
         // ie Jul-21
         if (format && col != '') {
             let date = new Date(col.toString());
             let shortenYear = date.getFullYear().toString().substr(-2);
-            let month = Interfaces.MonthNames[date.getMonth()].toString().substr(0,3);
+            let month = Interfaces.MonthNames[date.getMonth()].toString().substr(0, 3);
 
             return month + '-' + shortenYear;
         }
 
         return col ?? ''
     });
-    
+
     Columns = columns;
 
     // get series
-    series.forEach(serie => {      
+    series.forEach(serie => {
         let serieName: PrimitiveValue = serie.name ?? '';
         Series.push(serieName.toString());
     });
@@ -74,7 +76,7 @@ export function transformData(dataView: DataView): void {
             sharedAxis: columns[idx]
         };
         // series traversal is O(1)
-        series.forEach(serie => {      
+        series.forEach(serie => {
             let serieName: PrimitiveValue = serie.name ?? '';
             serie.values.forEach(val => {
                 if (Object.keys(val.source.roles)[0] == 'Column Values') {
@@ -85,6 +87,15 @@ export function transformData(dataView: DataView): void {
 
         D3Data.push(data);
     }
+
+    // get threshold
+    series.forEach(serie => {
+        serie.values.forEach(val => {
+            if (Object.keys(val.source.roles)[0] == 'Line Values') {
+                LineValues.push(<number>val.values[0])
+            }
+        });
+    });
 
     // console.log(D3Data)
 

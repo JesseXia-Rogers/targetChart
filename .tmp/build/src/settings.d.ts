@@ -4,29 +4,43 @@ export declare class VisualSettings extends DataViewObjectsParser {
     XAxisSettings: XAxisSettings;
     YAxisSettings: YAxisSettings;
     DataLabelSettings: DataLabelSettings;
-    GrowthSettings: GrowthSettings;
     LayoutSettings: LayoutSettings;
     BarSettings: BarSettings;
+    GrowthBarSettings: GrowthBarSettings;
+    GrowthLabelSettings: GrowthLabelSettings;
     Serie2Settings: Serie2Settings;
     Serie1Settings: Serie1Settings;
     LegendSettings: LegendSettings;
+    LineSettings: LineSettings;
+    PrimaryGrowthSettings: PrimaryGrowthSettings;
     PrimaryLabelSettings: PrimaryLabelSettings;
     PrimaryLineSettings: PrimaryLineSettings;
+    SecondaryGrowthSettings: SecondaryGrowthSettings;
     SecondaryLabelSettings: SecondaryLabelSettings;
     SecondaryLineSettings: SecondaryLineSettings;
+    SecondaryYAxis: SecondaryYAxis;
 }
 export declare class LayoutSettings {
     ChartXMargin: number;
-    ChartYMargin: number;
+    ChartTopMargin: number;
+    ChartBottomMargin: number;
     XAxisBarWhiteSpace: number;
     YScaleFactor: number;
 }
 export declare class BarSettings {
     BarAlignment: string;
     BarPadding: number;
-    BarBorder: boolean;
+    DisplayBarBorder: string;
     BarBorderSize: number;
     BarBorderColor: string;
+    BarBorderLineType: string;
+}
+export declare class LineSettings {
+    LineToggle: boolean;
+    LineAlign: boolean;
+    LineThickness: number;
+    LineColor: string;
+    LineType: string;
 }
 export declare class XAxisSettings {
     FontFamily: string;
@@ -38,9 +52,21 @@ export declare class XAxisSettings {
 }
 export declare class YAxisSettings {
     DisplayUnits: string;
+    DisplayDigits: number;
     MaxValue: number;
     TickCount: number;
     ToggleGridLines: boolean;
+    FontFamily: string;
+    FontColor: string;
+    FontSize: number;
+}
+export declare class SecondaryYAxis {
+    ToggleOn: boolean;
+    MinValue: number;
+    MaxValue: number;
+    DisplayUnits: string;
+    DisplayDigits: number;
+    TickCount: number;
     FontFamily: string;
     FontColor: string;
     FontSize: number;
@@ -82,11 +108,32 @@ export declare class LegendSettings {
     FontFamily: string;
     FontSize: number;
 }
-export declare class GrowthSettings {
+export declare class GrowthBarSettings {
+    GrowthRectToggle: boolean;
+    PositiveGrowthColor: string;
+    NegativeGrowthColor: string;
+    AlignGrowthRect: string;
+    GrowthRectWidth: number;
+}
+export declare class GrowthLabelSettings {
+    LabelToggle: boolean;
+    LabelPosition: string;
+    DisplayUnits: string;
+    DisplayDigits: number;
+    FontColor: string;
+    FontFamily: string;
+    FontSize: number;
+    LabelDisplayTolerance: number;
+    FlipSign: boolean;
+}
+export declare class PrimaryGrowthSettings {
+    Selector: string;
     TogglePrimaryIndicators: boolean;
-    ToggleSecondaryIndicator: boolean;
-    PrimarySelector: string;
-    SecondarySelector: string;
+    DisplayLabel: string;
+    DisplaySide: string;
+    AlignIndicators: boolean;
+    LabelYOffset: number;
+    LabelXOffset: number;
 }
 export declare class PrimaryLabelSettings {
     LabelBackgroundColor: string;
@@ -95,23 +142,28 @@ export declare class PrimaryLabelSettings {
     FontSize: number;
     BorderColor: string;
     BorderSize: number;
-    LabelOffsetHeight: number;
     LabelHeight: number;
     LabelMinWidth: number;
     ShowSign: boolean;
     ToggleBgShape: boolean;
 }
 export declare class PrimaryLineSettings {
-    AlignIndicators: boolean;
     LineColor: string;
     LineOffsetHeight: number;
     LineSize: number;
+    LineType: string;
     ArrowSize: number;
     DisplayArrow: string;
 }
-export declare class SecondaryLabelSettings {
+export declare class SecondaryGrowthSettings {
+    ToggleSecondaryIndicator: boolean;
+    Selector1: string;
+    Selector2: string;
+    DisplayLabel: string;
     DisplaySide: string;
-    xOffset: number;
+    LabelXOffset: number;
+}
+export declare class SecondaryLabelSettings {
     LabelBackgroundColor: string;
     BorderColor: string;
     BorderSize: number;
@@ -125,6 +177,7 @@ export declare class SecondaryLabelSettings {
 }
 export declare class SecondaryLineSettings {
     LineColor: string;
+    LineOffsetHeight: number;
     LineType: string;
     LineSize: number;
     ArrowSize: number;
