@@ -455,11 +455,17 @@
                             }
                         ]
                     }
+                },
+                "FlipSeries": {
+                    "displayName": "Flip Series",
+                    "type": {
+                        "bool": true
+                    }
                 }
             }
         },
-        "Serie1Settings": {
-            "displayName": "First Series",
+        "ValueSeries": {
+            "displayName": "Value Series (In Front)",
             "properties": {
                 "SerieColor": {
                     "displayName": "Serie Color",
@@ -483,7 +489,7 @@
                         "bool": true
                     }
                 },
-                "FontColor": {
+                "LabelFontColor": {
                     "displayName": "Label Font Color",
                     "type": {
                         "fill": {
@@ -526,8 +532,8 @@
                 }
             }
         },
-        "Serie2Settings": {
-            "displayName": "Second Series",
+        "TargetSeries": {
+            "displayName": "Target Series (Behind)",
             "properties": {
                 "SerieColor": {
                     "displayName": "Serie Color",
@@ -551,7 +557,7 @@
                         "bool": true
                     }
                 },
-                "FontColor": {
+                "LabelFontColor": {
                     "displayName": "Label Font Color",
                     "type": {
                         "fill": {
@@ -771,7 +777,7 @@
         "GrowthLabelSettings": {
             "displayName": "Growth Labels",
             "properties": {
-                "GrowthLabelToggle": {
+                "LabelToggle": {
                     "displayName": "Show Growth Labels",
                     "type": {
                         "bool": true
@@ -997,6 +1003,12 @@
                         "bool": true
                     }
                 },
+                "FlipCalculation": {
+                    "displayName": "Flip Growth Calculation",
+                    "type": {
+                        "bool": true
+                    }
+                },
                 "LabelHeight": {
                     "displayName": "Label Height",
                     "type": {
@@ -1199,6 +1211,12 @@
                 },
                 "ShowSign": {
                     "displayName": "Show +/- Sign",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "FlipCalculation": {
+                    "displayName": "Flip Growth Calculation",
                     "type": {
                         "bool": true
                     }

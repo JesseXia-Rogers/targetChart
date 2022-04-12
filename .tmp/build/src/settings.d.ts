@@ -8,8 +8,8 @@ export declare class VisualSettings extends DataViewObjectsParser {
     BarSettings: BarSettings;
     GrowthBarSettings: GrowthBarSettings;
     GrowthLabelSettings: GrowthLabelSettings;
-    Serie2Settings: Serie2Settings;
-    Serie1Settings: Serie1Settings;
+    TargetSeries: TargetSeries;
+    ValueSeries: ValueSeries;
     LegendSettings: LegendSettings;
     LineSettings: LineSettings;
     PrimaryGrowthSettings: PrimaryGrowthSettings;
@@ -34,6 +34,7 @@ export declare class BarSettings {
     BarBorderSize: number;
     BarBorderColor: string;
     BarBorderLineType: string;
+    FlipSeries: boolean;
 }
 export declare class LineSettings {
     LineToggle: boolean;
@@ -75,7 +76,7 @@ export declare class DataColors {
     seriesFontColor: string;
     seriesColor: string;
 }
-export declare class Serie2Settings {
+export declare class TargetSeries {
     SerieColor: string;
     ShowSerie: boolean;
     BarLabelToggle: boolean;
@@ -84,7 +85,7 @@ export declare class Serie2Settings {
     LabelBackgroundColor: string;
     BarLabelPosition: string;
 }
-export declare class Serie1Settings {
+export declare class ValueSeries {
     SerieColor: string;
     ShowSerie: boolean;
     BarLabelToggle: boolean;
@@ -145,6 +146,7 @@ export declare class PrimaryLabelSettings {
     LabelHeight: number;
     LabelMinWidth: number;
     ShowSign: boolean;
+    FlipCalculation: boolean;
     ToggleBgShape: boolean;
 }
 export declare class PrimaryLineSettings {
@@ -173,6 +175,7 @@ export declare class SecondaryLabelSettings {
     LabelHeight: number;
     LabelMinWidth: number;
     ShowSign: boolean;
+    FlipCalculation: boolean;
     ToggleBgShape: boolean;
 }
 export declare class SecondaryLineSettings {

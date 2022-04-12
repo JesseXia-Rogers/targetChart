@@ -8,6 +8,7 @@ import powerbi from 'powerbi-visuals-api';
 import { VisualSettings } from './settings';
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import { selection } from 'd3';
+import { groupValues } from 'powerbi-visuals-utils-dataviewutils/lib/dataViewTransform';
 
 // type
 type Selection<T extends d3.BaseType> = d3.Selection<T, any, any, any>;
@@ -62,8 +63,8 @@ export class D3Visual {
         const BAR_SETTINGS = this._settings.BarSettings;
         const X_AXIS_SETTINGS = this._settings.XAxisSettings;
         const Y_AXIS_SETTINGS = this._settings.YAxisSettings;
-        const SECOND_SERIES = this._settings.Serie2Settings;
-        const FIRST_SERIES = this._settings.Serie1Settings;
+        const TARGET_SERIES = this._settings.TargetSeries;
+        const VALUE_SERIES = this._settings.ValueSeries;
         const DATA_LABEL_SETTINGS = this._settings.DataLabelSettings;
         const LEGEND_SETTINGS = this._settings.LegendSettings;
         const GROWTH_BAR_SETTINGS = this._settings.GrowthBarSettings;
@@ -128,6 +129,12 @@ export class D3Visual {
             .style('margin-top', `${LAYOUT_SETTINGS.ChartTopMargin}px`)
             .style('margin-bottom', `${LAYOUT_SETTINGS.ChartBottomMargin}px`)
             .attr('overflow', 'visible');
+        
+        let dpSeries = dp.Series;
+
+        if (BAR_SETTINGS.FlipSeries) {
+            dpSeries = dpSeries.reverse();
+        }
 
         // set x axis values
         let x = d3.scaleBand()
@@ -235,7 +242,7 @@ export class D3Visual {
             .call(setSecYAxisGAttr);
 
         // generate stack
-        let serieStack = d3.stack().keys(dp.Series);
+        let serieStack = d3.stack().keys(dpSeries);
         let stackData = serieStack(dp.D3Data);
         // console.log(stackData)
 
@@ -244,7 +251,7 @@ export class D3Visual {
         let trueWidth = width + xPadding;
 
         // gets current series
-        let currSeries = idx => idx ? FIRST_SERIES : SECOND_SERIES;
+        let currSeries = idx => idx ? VALUE_SERIES : TARGET_SERIES;
 
         // create legend
         if (LEGEND_SETTINGS.LegendToggle) {
@@ -265,7 +272,7 @@ export class D3Visual {
             let legendWidth = 0;
 
             // calculates text width for each name based on font size and family
-            dp.Series.forEach(serieName => {
+            dpSeries.forEach(serieName => {
                 // gets width
                 let nameWidth = this.getTextWidth(serieName, LEGEND_SETTINGS);
 
@@ -292,7 +299,7 @@ export class D3Visual {
                 // places each legend label
                 legend.attr('transform', (_, i) => {
                     // displays each label below previous label
-                    let n = dp.Series.length;
+                    let n = dpSeries.length;
                     return 'translate(0,' + (i % n * legendRectHeight) + ')';
                 });
 
@@ -330,7 +337,7 @@ export class D3Visual {
                 .attr('width', 10)
                 .attr('height', 10)
                 .attr('y', 0)
-                .attr('fill', d => currSeries(dp.Series.indexOf(d.key)).SerieColor);
+                .attr('fill', d => currSeries(dpSeries.indexOf(d.key)).SerieColor);
 
             // adds legend text
             let legendText = legend.append('text')
@@ -382,12 +389,12 @@ export class D3Visual {
                     .data(serie)
                     .join('rect')
                     .classed('bar', true)
-                    .attr('fill', idx ? FIRST_SERIES.SerieColor : SECOND_SERIES.SerieColor)
+                    .attr('fill', idx ? VALUE_SERIES.SerieColor : TARGET_SERIES.SerieColor)
                     .attr('stroke-width', 0)
                     .attr('stroke', BAR_SETTINGS.BarBorderColor)
                     .attr('width', x.bandwidth())
                     .attr('x', data => x(data.data.sharedAxis.toString()))
-                    .attr('serie', dp.Series[idx])
+                    .attr('serie', dpSeries[idx])
                     .attr('xIdx', (_, i) => i);
 
                 // set border line type
@@ -410,25 +417,6 @@ export class D3Visual {
                         break;
                 }
 
-                // create label on each bar
-                let barLabel = null;
-
-                if (idx ? FIRST_SERIES.BarLabelToggle : SECOND_SERIES.BarLabelToggle) {
-                    barLabel = svg.selectAll('.label')
-                        .data(serie)
-                        .enter()
-                        .append('text')
-                        .attr('width', x.bandwidth())
-                        .attr('height', DATA_LABEL_SETTINGS.LabelFontSize)
-                        .attr('fill', idx ? FIRST_SERIES.LabelFontColor : SECOND_SERIES.LabelFontColor)
-                        .attr('font-size', DATA_LABEL_SETTINGS.LabelFontSize)
-                        .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
-                        .attr('text-anchor', 'middle')
-                        .attr('dominant-baseline', 'middle');
-
-                    barLabel.attr('x', data => x(data.data.sharedAxis.toString()));
-                }
-
                 let yMax = Y_AXIS_SETTINGS.MaxValue;
 
                 // find local max
@@ -444,6 +432,16 @@ export class D3Visual {
                     .filter((_, i) => i == 0)
                     .remove();
 
+                // set secondary y axis
+                y1.domain([minVal, maxVal ? maxVal : localRange * LAYOUT_SETTINGS.YScaleFactor]);
+                secYAxisG.call(secYAxis)
+                    .call(setSecYAxisGAttr);
+
+                // removes 0 label
+                d3.select('.sec-y-axis-g > .tick')
+                    .filter(d => d == 0)
+                    .remove();
+
                 // removes border
                 d3.selectAll('.domain').remove();
 
@@ -451,6 +449,8 @@ export class D3Visual {
                     if (idx) {
                         switch (BAR_SETTINGS.BarAlignment) {
                             case 'center':
+                                // return 0;
+                                // console.log(dpSeries[idx])
                                 return x(data.data.sharedAxis.toString()) + x.bandwidth() / 2 - x.bandwidth() * BAR_SETTINGS.BarPadding / 2;
                             case 'left':
                                 return x(data.data.sharedAxis.toString());
@@ -558,9 +558,9 @@ export class D3Visual {
                 }
 
                 // prevent duplicate growth bars
-                if (FIRST_SERIES.ShowSerie) {
+                if (VALUE_SERIES.ShowSerie) {
                     growthBarOn = idx ? true : false;
-                } else if (SECOND_SERIES.ShowSerie) {
+                } else if (TARGET_SERIES.ShowSerie) {
                     growthBarOn = idx ? false : true;
                 }
 
@@ -568,55 +568,57 @@ export class D3Visual {
                 if (GROWTH_BAR_SETTINGS.GrowthRectToggle && growthBarOn) {
 
                     dp.D3Data.forEach((dataset, xId) => {
-                        let data1 = dataset[dp.Series[0]];
-                        let data2 = dataset[dp.Series[1]];
+                        let data1 = dataset[dpSeries[0]];
+                        let data2 = dataset[dpSeries[1]];
 
-                        // calculates growth value
-                        let growthValue = (1 - data1 / data2) * 100;
+                        if (data1 && data2) {
+                            // calculates growth value
+                            let growthValue = (1 - data1 / data2) * 100;
 
-                        let getXPos = _ => {
-                            if (GROWTH_BAR_SETTINGS.AlignGrowthRect == 'left') {
-                                return x(dataset.sharedAxis);
-                            } else {
-                                return x(dataset.sharedAxis) + x.bandwidth() * (1 - GROWTH_BAR_SETTINGS.GrowthRectWidth);
+                            let getXPos = _ => {
+                                if (GROWTH_BAR_SETTINGS.AlignGrowthRect == 'left') {
+                                    return x(dataset.sharedAxis);
+                                } else {
+                                    return x(dataset.sharedAxis) + x.bandwidth() * (1 - GROWTH_BAR_SETTINGS.GrowthRectWidth);
+                                }
                             }
-                        }
 
-                        // draws rect
-                        svg.append('rect')
-                            .classed('growth-rect', true)
-                            .attr('xIdx', xId)
-                            .attr('fill', growthValue > 0 ? GROWTH_BAR_SETTINGS.PositiveGrowthColor : GROWTH_BAR_SETTINGS.NegativeGrowthColor)
-                            .attr('width', x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth)
-                            .attr('x', getXPos)
-                            .attr('height', Math.abs(y0(data1) - y0(data2)))
-                            .attr('y', growthValue > 0 ? y0(data2) : y0(data1));
-
-                        let val = data1 - data2;
-                        if (GROWTH_LABEL_SETTINGS.FlipSign)
-                            val *= -1;
-
-                        let labelVal = nFormatter(val, GROWTH_LABEL_SETTINGS.DisplayDigits, GROWTH_LABEL_SETTINGS.DisplayUnits)
-
-                        if (GROWTH_LABEL_SETTINGS.LabelToggle &&
-                            this.getTextWidth(labelVal, GROWTH_LABEL_SETTINGS) < x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth + GROWTH_LABEL_SETTINGS.LabelDisplayTolerance) {
-                            // add text
-                            svg.append('text')
+                            // draws rect
+                            svg.append('rect')
+                                .classed('growth-rect', true)
+                                .attr('xIdx', xId)
+                                .attr('fill', growthValue > 0 ? GROWTH_BAR_SETTINGS.PositiveGrowthColor : GROWTH_BAR_SETTINGS.NegativeGrowthColor)
                                 .attr('width', x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth)
-                                .attr('x', getXPos(0) + x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth / 2)
-                                .attr('y', _ => {
-                                    if (GROWTH_LABEL_SETTINGS.LabelPosition == 'mid') {
-                                        return (growthValue > 0 ? y0(data2) : y0(data1)) + Math.abs(y0(data1) - y0(data2)) / 2;
-                                    } else {
-                                        return (growthValue > 0 ? y0(data2) : y0(data1)) - 10;
-                                    }
-                                })
-                                .attr('fill', GROWTH_LABEL_SETTINGS.FontColor)
-                                .attr('font-size', GROWTH_LABEL_SETTINGS.FontSize)
-                                .attr('font-family', GROWTH_LABEL_SETTINGS.FontFamily)
-                                .attr('text-anchor', 'middle')
-                                .attr('dominant-baseline', 'middle')
-                                .text(labelVal);
+                                .attr('x', getXPos)
+                                .attr('height', Math.abs(y0(data1) - y0(data2)))
+                                .attr('y', growthValue > 0 ? y0(data2) : y0(data1));
+
+                            let val = data1 - data2;
+                            if (GROWTH_LABEL_SETTINGS.FlipSign)
+                                val *= -1;
+
+                            let labelVal = nFormatter(val, GROWTH_LABEL_SETTINGS.DisplayDigits, GROWTH_LABEL_SETTINGS.DisplayUnits)
+
+                            if (GROWTH_LABEL_SETTINGS.LabelToggle &&
+                                this.getTextWidth(labelVal, GROWTH_LABEL_SETTINGS) < x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth + GROWTH_LABEL_SETTINGS.LabelDisplayTolerance) {
+                                // add text
+                                svg.append('text')
+                                    .attr('width', x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth)
+                                    .attr('x', getXPos(0) + x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth / 2)
+                                    .attr('y', _ => {
+                                        if (GROWTH_LABEL_SETTINGS.LabelPosition == 'mid') {
+                                            return (growthValue > 0 ? y0(data2) : y0(data1)) + Math.abs(y0(data1) - y0(data2)) / 2;
+                                        } else {
+                                            return (growthValue > 0 ? y0(data2) : y0(data1)) - 10;
+                                        }
+                                    })
+                                    .attr('fill', GROWTH_LABEL_SETTINGS.FontColor)
+                                    .attr('font-size', GROWTH_LABEL_SETTINGS.FontSize)
+                                    .attr('font-family', GROWTH_LABEL_SETTINGS.FontFamily)
+                                    .attr('text-anchor', 'middle')
+                                    .attr('dominant-baseline', 'middle')
+                                    .text(labelVal);
+                            }
                         }
 
                     });
@@ -630,26 +632,51 @@ export class D3Visual {
                                 .attr('height', 0)
                                 .style('opacity', 0)
                         });
+
                 }
 
                 // show text if bar height allows and bar labels are toggled on
                 if (currSeries(idx).BarLabelToggle) {
+
+                    // create label on each bar
+                    let barLabel = svg.selectAll('.label')
+                        .data(serie)
+                        .enter()
+                        .append('text')
+                        .attr('width', x.bandwidth())
+                        .attr('height', DATA_LABEL_SETTINGS.LabelFontSize)
+                        .attr('fill', idx ? VALUE_SERIES.LabelFontColor : TARGET_SERIES.LabelFontColor)
+                        .attr('font-size', DATA_LABEL_SETTINGS.LabelFontSize)
+                        .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
+                        .attr('text-anchor', 'middle')
+                        .attr('dominant-baseline', 'middle');
+
                     let getLabelText = data => {
                         // gets data value
-                        let val = data.data[dp.Series[idx]];
+                        let val = data.data[dpSeries[idx]];
+                        // console.log(val)
+                        if (!val)
+                            return {
+                                value: null,
+                                width: 0
+                            };
 
                         // gets bar height
                         let barHeight = y0(data[0]) - y0(data[1]);
 
                         // max allowable text width
-                        let maxTextWidth = x.bandwidth() / dp.Series.length + DATA_LABEL_SETTINGS.LabelDisplayTolerance;
+                        let maxTextWidth = x.bandwidth() / dpSeries.length + DATA_LABEL_SETTINGS.LabelDisplayTolerance;
 
                         val = nFormatter(val, displayDigits, displayUnits);
+
                         let textWidth = this.getTextWidth(val, DATA_LABEL_SETTINGS);
 
                         if (textWidth > maxTextWidth ||
                             barHeight <= DATA_LABEL_SETTINGS.LabelFontSize) {
-                            return null;
+                            return {
+                                value: null,
+                                width: 0
+                            };
                         }
 
                         return {
@@ -658,16 +685,16 @@ export class D3Visual {
                         }
                     }
 
-                    barLabel.text(data => getLabelText(data).value)
-                    let labelPos = idx ? FIRST_SERIES.BarLabelPosition : SECOND_SERIES.BarLabelPosition;
+                    barLabel.text(data => getLabelText(data).value);
+
+                    let labelPos = currSeries(idx).BarLabelPosition;
 
                     if (labelPos == 'mid') {
                         barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
                             .attr('y', data => height - (y0(data[0]) - y0(data[1])) / 2);
 
                     } else if (labelPos == 'top') {
-
-                        if (idx ? FIRST_SERIES.LabelBgToggle : SECOND_SERIES.LabelBgToggle) {
+                        if (currSeries(idx).LabelBgToggle) {
                             // background
                             let bgPadding = 4;
                             svg.selectAll('.labelBg')
@@ -678,7 +705,7 @@ export class D3Visual {
                                 .attr('height', DATA_LABEL_SETTINGS.LabelFontSize + bgPadding / 2)
                                 .attr('fill', currSeries(idx).LabelBackgroundColor)
                                 .attr('y', data => y0(data[1] - data[0]) - 18)
-                                .attr('x', data => x(data.data.sharedAxis.toString()) + x.bandwidth() / 4);
+                                .attr('x', data => setBarX(data) + x.bandwidth() / 4);
                         }
 
                         // set text and xy pos
@@ -790,6 +817,11 @@ export class D3Visual {
 
                         // calculate label text
                         let growthValue = (1 - data1 / data2) * 100;
+
+                        if (eval(setting + '_LABEL_SETTINGS').FlipCalculation) {
+                            growthValue = (data1 / data2) * 100
+                        }
+
                         growthValue = eval(setting + '_LABEL_SETTINGS').ShowSign ? growthValue : Math.abs(growthValue);
                         let growthValueRounded = Math.round(growthValue * 10) / 10 + '%';
 
@@ -840,13 +872,13 @@ export class D3Visual {
                         let xPos = Math.min(growth2X, growth1X) - eval(setting + '_GROWTH_SETTINGS').LabelXOffset;
                         // ensures x pos does not exceed width
                         xPos = xPos < 0 ? 0 : xPos;
-                        
+
                         let arrowRotation = -30;
 
                         if (eval(setting + '_GROWTH_SETTINGS').DisplaySide == 'right') {
                             // adds offset to account for bar width
-                            growth1X += x.bandwidth() / dp.Series.length;
-                            growth2X += x.bandwidth() / dp.Series.length;
+                            growth1X += x.bandwidth() / dpSeries.length;
+                            growth2X += x.bandwidth() / dpSeries.length;
 
                             // gets desired x position
                             xPos = Math.max(growth2X, growth1X) + eval(setting + '_GROWTH_SETTINGS').LabelXOffset;
@@ -872,7 +904,22 @@ export class D3Visual {
                         }
 
                         // calculate label text
-                        let growthValue = (1 - data1 / data2) * 100;
+                        let growthValue;
+
+                        if (BAR_SETTINGS.FlipSeries) {
+                            growthValue = (1 - data2 / data1) * 100;
+    
+                            if (eval(setting + '_LABEL_SETTINGS').FlipCalculation) {
+                                growthValue = (data2 / data1) * 100
+                            }
+                        } else {
+                            growthValue = (1 - data1 / data2) * 100;
+    
+                            if (eval(setting + '_LABEL_SETTINGS').FlipCalculation) {
+                                growthValue = (data1 / data2) * 100
+                            }
+                        }
+
                         growthValue = eval(setting + '_LABEL_SETTINGS').ShowSign ? growthValue : Math.abs(growthValue);
                         let growthValueRounded = Math.round(growthValue * 10) / 10 + '%';
 
@@ -911,7 +958,7 @@ export class D3Visual {
         }
 
         // draw primary growth indicators
-        if (dp.Series.length > 1 &&
+        if (dpSeries.length > 1 &&
             PRIMARY_GROWTH_SETTINGS.TogglePrimaryIndicators) {
 
             let primarySelectors = PRIMARY_GROWTH_SETTINGS.Selector;
@@ -923,8 +970,8 @@ export class D3Visual {
                 primSel.forEach(selector => {
                     if (selector) {
                         let col = dp.D3Data[this.getIndex(selector)]
-                        let data1 = col[dp.Series[0]];
-                        let data2 = col[dp.Series[1]];
+                        let data1 = col[dpSeries[0]];
+                        let data2 = col[dpSeries[1]];
 
                         drawGrowthIndicators(data1, data2, col, col, 'PRIMARY');
                     }
@@ -932,8 +979,8 @@ export class D3Visual {
             } else {
                 dp.D3Data.forEach(dataset => {
                     // gets corresponding serie data based on selectors
-                    let data1 = dataset[dp.Series[0]];
-                    let data2 = dataset[dp.Series[1]];
+                    let data1 = dataset[dpSeries[0]];
+                    let data2 = dataset[dpSeries[1]];
 
                     drawGrowthIndicators(data1, data2, dataset, dataset, 'PRIMARY');
                 });
@@ -949,7 +996,7 @@ export class D3Visual {
 
             // iterates over columns starting from last column, returns first-from-last non-zero column
             while (lastIdx >= 0) {
-                lastVal = dp.D3Data[lastIdx][dp.Series[1]];
+                lastVal = dp.D3Data[lastIdx][dpSeries[1]];
                 if (lastVal)
                     break;
 
@@ -970,7 +1017,7 @@ export class D3Visual {
             // finds second growth selector if growth selector is specified, otherwise, use default value
             if (select2) {
                 growth2Idx = this.getIndex(select2);
-                growth2Val = dp.D3Data[growth2Idx][dp.Series[1]];
+                growth2Val = dp.D3Data[growth2Idx][dpSeries[1]];
 
             } else {
                 growth2Idx = lastIdx;
@@ -984,7 +1031,7 @@ export class D3Visual {
             // finds first growth selector
             if (select1) {
                 growth1Idx = this.getIndex(select1);
-                growth1Val = dp.D3Data[growth1Idx][dp.Series[1]];
+                growth1Val = dp.D3Data[growth1Idx][dpSeries[1]];
 
             } else {
                 // gets shortened month ex Jan
@@ -1031,7 +1078,7 @@ export class D3Visual {
 
                 // gets first non-zero column
                 while (growth1Idx < dp.Columns.length) {
-                    growth1Val = dp.D3Data[growth1Idx][dp.Series[1]];
+                    growth1Val = dp.D3Data[growth1Idx][dpSeries[1]];
                     if (growth1Val)
                         break;
 
@@ -1206,5 +1253,5 @@ function nFormatter(num: number, digits: number, displayUnits: string): string {
             }
         }
     }
-    return (num / si[i].value).toFixed(digits) + si[i].symbol;
+    return parseFloat((num / si[i].value).toFixed(digits)).toLocaleString() + si[i].symbol;
 }

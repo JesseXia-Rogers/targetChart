@@ -37,8 +37,8 @@ export class VisualSettings extends DataViewObjectsParser {
     public BarSettings: BarSettings = new BarSettings();
     public GrowthBarSettings: GrowthBarSettings = new GrowthBarSettings();
     public GrowthLabelSettings: GrowthLabelSettings = new GrowthLabelSettings();
-    public Serie2Settings: Serie2Settings = new Serie2Settings();
-    public Serie1Settings: Serie1Settings = new Serie1Settings();
+    public TargetSeries: TargetSeries = new TargetSeries();
+    public ValueSeries: ValueSeries = new ValueSeries();
     public LegendSettings: LegendSettings = new LegendSettings();
     public LineSettings: LineSettings = new LineSettings();
     public PrimaryGrowthSettings: PrimaryGrowthSettings = new PrimaryGrowthSettings();
@@ -64,10 +64,13 @@ export class LayoutSettings {
 export class BarSettings {
     public BarAlignment: string = 'center';
     public BarPadding: number = 0.7;
+
     public DisplayBarBorder: string = 'none';
     public BarBorderSize: number = 2;
     public BarBorderColor: string = '#666666';
     public BarBorderLineType: string = 'dashed';
+
+    public FlipSeries: boolean = false;
 }
 
 export class LineSettings {
@@ -105,7 +108,7 @@ export class YAxisSettings {
 }
 
 export class SecondaryYAxis {
-    public ToggleOn: boolean = false;
+    public ToggleOn: boolean = true;
 
     public MinValue: number = 0;
     public MaxValue: number = 0;
@@ -125,7 +128,7 @@ export class DataColors {
     public seriesColor: string = '#000000';
 }
 
-export class Serie2Settings {
+export class TargetSeries {
     public SerieColor: string = '#B3B3B3';
 
     public ShowSerie: boolean = true;
@@ -136,7 +139,7 @@ export class Serie2Settings {
     public BarLabelPosition: string = 'top';
 }
 
-export class Serie1Settings {
+export class ValueSeries {
     public SerieColor: string = '#333333';
 
     public ShowSerie: boolean = true;
@@ -219,6 +222,8 @@ export class PrimaryLabelSettings {
     public LabelMinWidth: number = 20;
 
     public ShowSign: boolean = true;
+    public FlipCalculation: boolean = false;
+
     public ToggleBgShape: boolean = true;
 }
 
@@ -258,6 +263,8 @@ export class SecondaryLabelSettings {
     public LabelMinWidth: number = 20;
 
     public ShowSign: boolean = true;
+    public FlipCalculation: boolean = false;
+
     public ToggleBgShape: boolean = true;
 }
 
