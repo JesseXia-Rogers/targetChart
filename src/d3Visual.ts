@@ -129,7 +129,7 @@ export class D3Visual {
             .style('margin-top', `${LAYOUT_SETTINGS.ChartTopMargin}px`)
             .style('margin-bottom', `${LAYOUT_SETTINGS.ChartBottomMargin}px`)
             .attr('overflow', 'visible');
-        
+
         let dpSeries = dp.Series;
 
         if (BAR_SETTINGS.FlipSeries) {
@@ -644,9 +644,9 @@ export class D3Visual {
                         .enter()
                         .append('text')
                         .attr('width', x.bandwidth())
-                        .attr('height', DATA_LABEL_SETTINGS.LabelFontSize)
+                        .attr('height', DATA_LABEL_SETTINGS.FontSize)
                         .attr('fill', idx ? VALUE_SERIES.LabelFontColor : TARGET_SERIES.LabelFontColor)
-                        .attr('font-size', DATA_LABEL_SETTINGS.LabelFontSize)
+                        .attr('font-size', DATA_LABEL_SETTINGS.FontSize)
                         .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
                         .attr('text-anchor', 'middle')
                         .attr('dominant-baseline', 'middle');
@@ -654,12 +654,11 @@ export class D3Visual {
                     let getLabelText = data => {
                         // gets data value
                         let val = data.data[dpSeries[idx]];
-                        // console.log(val)
                         if (!val)
                             return {
                                 value: null,
                                 width: 0
-                            };
+                            }
 
                         // gets bar height
                         let barHeight = y0(data[0]) - y0(data[1]);
@@ -672,11 +671,11 @@ export class D3Visual {
                         let textWidth = this.getTextWidth(val, DATA_LABEL_SETTINGS);
 
                         if (textWidth > maxTextWidth ||
-                            barHeight <= DATA_LABEL_SETTINGS.LabelFontSize) {
+                            barHeight <= DATA_LABEL_SETTINGS.FontSize) {
                             return {
                                 value: null,
                                 width: 0
-                            };
+                            }
                         }
 
                         return {
@@ -702,7 +701,7 @@ export class D3Visual {
                                 .enter()
                                 .append('rect')
                                 .attr('width', data => getLabelText(data).width + bgPadding)
-                                .attr('height', DATA_LABEL_SETTINGS.LabelFontSize + bgPadding / 2)
+                                .attr('height', DATA_LABEL_SETTINGS.FontSize + bgPadding / 2)
                                 .attr('fill', currSeries(idx).LabelBackgroundColor)
                                 .attr('y', data => y0(data[1] - data[0]) - 18)
                                 .attr('x', data => setBarX(data) + x.bandwidth() / 4);
@@ -716,6 +715,10 @@ export class D3Visual {
                         barLabel.each(function () {
                             this.parentNode.appendChild(this);
                         });
+                        
+                    } else {
+                        barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                            .attr('y', height - 15);
                     }
                 }
 
@@ -750,14 +753,14 @@ export class D3Visual {
             if (LINE_SETTINGS.LineAlign) {
                 // align secondary y-axis
                 svg.selectAll('.lineValues')
-                    .attr('y1', y1(thresholdValue))
-                    .attr('y2', y1(thresholdValue));
+                    .attr('y1', y1(thresholdValue) - LINE_SETTINGS.LineOffsetHeight)
+                    .attr('y2', y1(thresholdValue) - LINE_SETTINGS.LineOffsetHeight);
 
             } else {
                 // align primary y-axis
                 svg.selectAll('.lineValues')
-                    .attr('y1', y0(thresholdValue))
-                    .attr('y2', y0(thresholdValue));
+                    .attr('y1', y0(thresholdValue) - LINE_SETTINGS.LineOffsetHeight)
+                    .attr('y2', y0(thresholdValue) - LINE_SETTINGS.LineOffsetHeight);
             }
 
             // sets line type
@@ -816,7 +819,21 @@ export class D3Visual {
                         this.drawLine(path, 'growthLine', eval(setting + '_LINE_SETTINGS'));
 
                         // calculate label text
-                        let growthValue = (1 - data1 / data2) * 100;
+                        let growthValue;
+
+                        if (BAR_SETTINGS.FlipSeries) {
+                            growthValue = (1 - data2 / data1) * 100;
+
+                            if (eval(setting + '_LABEL_SETTINGS').FlipCalculation) {
+                                growthValue = (data2 / data1) * 100
+                            }
+                        } else {
+                            growthValue = (1 - data1 / data2) * 100;
+
+                            if (eval(setting + '_LABEL_SETTINGS').FlipCalculation) {
+                                growthValue = (data1 / data2) * 100;
+                            }
+                        }
 
                         if (eval(setting + '_LABEL_SETTINGS').FlipCalculation) {
                             growthValue = (data1 / data2) * 100
@@ -908,15 +925,15 @@ export class D3Visual {
 
                         if (BAR_SETTINGS.FlipSeries) {
                             growthValue = (1 - data2 / data1) * 100;
-    
+
                             if (eval(setting + '_LABEL_SETTINGS').FlipCalculation) {
                                 growthValue = (data2 / data1) * 100
                             }
                         } else {
                             growthValue = (1 - data1 / data2) * 100;
-    
+
                             if (eval(setting + '_LABEL_SETTINGS').FlipCalculation) {
-                                growthValue = (data1 / data2) * 100
+                                growthValue = (data1 / data2) * 100;
                             }
                         }
 
@@ -1034,55 +1051,15 @@ export class D3Visual {
                 growth1Val = dp.D3Data[growth1Idx][dpSeries[1]];
 
             } else {
-                // gets shortened month ex Jan
-                let month = dp.Columns[growth2Idx].toLowerCase().slice(0, 3);
-
-                // gets shortened year ex 21
-                let year = dp.Columns[growth2Idx].slice(4);
-
-                // gets array of month names
-                let months = [];
-                Interfaces.MonthNames.forEach(month => {
-                    months.push(month.toLowerCase().slice(0, 3));
-                });
-
-                // if 12-month prev == 0 find next closest available non-zero month, starting from 12-month prev and incrementing
-                growth1Idx = growth2Idx - 12 < 0 ? 0 : growth2Idx - 12;
-
-                // check if format is valid
-                // month must exist
-                /// year must be a number
-                if (months.indexOf(month) > -1 && +year) {
-                    // gets year
-                    year = parseInt(year) - 1;
-
-                    // sets column name
-                    let col = month.charAt(0).toUpperCase() + month.slice(1) + '-' + year.toString();
-
-                    // finds 13 month range
-                    let rangeExists = false;
-                    for (let monthIdx = months.indexOf(month); monthIdx < 12; monthIdx++) {
-                        if (dp.Columns[growth1Idx] != col) {
-                            growth1Idx++;
-                        } else {
-                            rangeExists = true;
-                            break;
-                        }
-                    }
-
-                    // reset index 
-                    if (!rangeExists) {
-                        growth1Idx = 0;
-                    }
-                }
+                growth1Idx = --lastIdx;
 
                 // gets first non-zero column
-                while (growth1Idx < dp.Columns.length) {
+                while (growth1Idx >= 0) {
                     growth1Val = dp.D3Data[growth1Idx][dpSeries[1]];
                     if (growth1Val)
                         break;
 
-                    growth1Idx++;
+                    growth1Idx--;
                 }
                 // sets selector
                 select1 = dp.Columns[growth1Idx];

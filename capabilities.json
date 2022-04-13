@@ -335,6 +335,12 @@
                         "bool": true
                     }
                 },
+                "LineOffsetHeight": {
+                    "displayName": "Line Offset Height",
+                    "type": {
+                        "numeric": true
+                    }
+                },
                 "LineAlign": {
                     "displayName": "Align to Secondary Y-Axis",
                     "type": {
@@ -526,6 +532,10 @@
                             {
                                 "displayName": "Top",
                                 "value": "top"
+                            },
+                            {
+                                "value": "bottom",
+                                "displayName": "Bottom"
                             }
                         ]
                     }
@@ -594,6 +604,10 @@
                             {
                                 "displayName": "Top",
                                 "value": "top"
+                            },
+                            {
+                                "value": "bottom",
+                                "displayName": "Bottom"
                             }
                         ]
                     }

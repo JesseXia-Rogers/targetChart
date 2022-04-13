@@ -75,6 +75,7 @@ export class BarSettings {
 
 export class LineSettings {
     public LineToggle: boolean = true;
+    public LineOffsetHeight: number = 0;
     public LineAlign: boolean = false;
     public LineThickness: number = 1;
     public LineColor: string = '#FF0000';
@@ -155,8 +156,8 @@ export class DataLabelSettings {
     public DisplayDigits: number = 1;
 
     public FontFamily: string = 'Calibri';
+    public FontSize: number = 10;
 
-    public LabelFontSize: number = 10;
     public LabelDisplayTolerance: number = 10;
 }
 

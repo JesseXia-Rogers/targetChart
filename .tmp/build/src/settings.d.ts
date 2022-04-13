@@ -38,6 +38,7 @@ export declare class BarSettings {
 }
 export declare class LineSettings {
     LineToggle: boolean;
+    LineOffsetHeight: number;
     LineAlign: boolean;
     LineThickness: number;
     LineColor: string;
@@ -98,7 +99,7 @@ export declare class DataLabelSettings {
     DisplayUnits: string;
     DisplayDigits: number;
     FontFamily: string;
-    LabelFontSize: number;
+    FontSize: number;
     LabelDisplayTolerance: number;
 }
 export declare class LegendSettings {
