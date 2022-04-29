@@ -11,27 +11,9 @@ export interface Numeric {
     topRounded: number;
     interval: number;
 }
-export interface RegionValue {
-    region: string;
-    value: number;
-}
 export interface Dimension {
     width: number;
     height: number;
-}
-export interface Position {
-    x: number;
-    y: number;
-    index: number;
-}
-export interface KPI {
-    name: string;
-    values: number[];
-}
-export interface BarData {
-    column: string;
-    data: RegionValue[];
-    index: number;
 }
 export interface BarChartDataPoint {
     value: PrimitiveValue;

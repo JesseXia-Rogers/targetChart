@@ -470,6 +470,61 @@
                 }
             }
         },
+        "PatternSettings": {
+            "displayName": "Pattern Settings",
+            "properties": {
+                "PatternToggle": {
+                    "displayName": "Show Pattern",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "PatternColor": {
+                    "displayName": "Pattern Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "PatternType": {
+                    "displayName": "Pattern Type",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "displayName": "Stripes",
+                                "value": "stripes"
+                            },
+                            {
+                                "displayName": "Dots",
+                                "value": "dots"
+                            }
+                        ]
+                    }
+                },
+                "PatternUnitSize": {
+                    "displayName": "Pattern Unit Size",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "displayName": "Small",
+                                "value": "small"
+                            },
+                            {
+                                "displayName": "Medium",
+                                "value": "medium"
+                            },
+                            {
+                                "displayName": "Large",
+                                "value": "large"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
         "ValueSeries": {
             "displayName": "Value Series (In Front)",
             "properties": {
@@ -538,6 +593,18 @@
                                 "displayName": "Bottom"
                             }
                         ]
+                    }
+                },
+                "BarSelect": {
+                    "displayName": "Select Bar",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "BarHeightAdjustment": {
+                    "displayName": "Bar Height Adjustment",
+                    "type": {
+                        "numeric": true
                     }
                 }
             }
@@ -610,6 +677,18 @@
                                 "displayName": "Bottom"
                             }
                         ]
+                    }
+                },
+                "BarSelect": {
+                    "displayName": "Select Bar",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "BarHeightAdjustment": {
+                    "displayName": "Bar Height Adjustment",
+                    "type": {
+                        "numeric": true
                     }
                 }
             }
@@ -1062,6 +1141,21 @@
                         "numeric": true
                     }
                 },
+                "LineType": {
+                    "displayName": "Line Type",
+                    "type": {
+                        "enumeration": [
+                            {
+                                "value": "dashed",
+                                "displayName": "Dashed"
+                            },
+                            {
+                                "value": "solid",
+                                "displayName": "Solid"
+                            }
+                        ]
+                    }
+                },
                 "AlignIndicators": {
                     "displayName": "Align Primary Indicators",
                     "type": {
@@ -1247,7 +1341,7 @@
             "displayName": "Secondary Line Settings",
             "properties": {
                 "LineColor": {
-                    "displayName": "Secondary Line Color",
+                    "displayName": "Line Color",
                     "type": {
                         "fill": {
                             "solid": {
@@ -1257,7 +1351,7 @@
                     }
                 },
                 "LineType": {
-                    "displayName": "Secondary Line Type",
+                    "displayName": "Line Type",
                     "type": {
                         "enumeration": [
                             {

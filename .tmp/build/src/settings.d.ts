@@ -5,6 +5,7 @@ export declare class VisualSettings extends DataViewObjectsParser {
     YAxisSettings: YAxisSettings;
     DataLabelSettings: DataLabelSettings;
     LayoutSettings: LayoutSettings;
+    PatternSettings: PatternSettings;
     BarSettings: BarSettings;
     GrowthBarSettings: GrowthBarSettings;
     GrowthLabelSettings: GrowthLabelSettings;
@@ -26,6 +27,12 @@ export declare class LayoutSettings {
     ChartBottomMargin: number;
     XAxisBarWhiteSpace: number;
     YScaleFactor: number;
+}
+export declare class PatternSettings {
+    PatternToggle: boolean;
+    PatternColor: string;
+    PatternType: string;
+    PatternUnitSize: string;
 }
 export declare class BarSettings {
     BarAlignment: string;
@@ -85,6 +92,8 @@ export declare class TargetSeries {
     LabelFontColor: string;
     LabelBackgroundColor: string;
     BarLabelPosition: string;
+    BarSelect: string;
+    BarHeightAdjustment: number;
 }
 export declare class ValueSeries {
     SerieColor: string;
@@ -94,6 +103,8 @@ export declare class ValueSeries {
     LabelBgToggle: boolean;
     LabelBackgroundColor: string;
     BarLabelPosition: string;
+    BarSelect: string;
+    BarHeightAdjustment: number;
 }
 export declare class DataLabelSettings {
     DisplayUnits: string;

@@ -4,7 +4,7 @@
         "displayName": "targetChart",
         "guid": "targetChart9D5E6D3E19A24BA491DA372F50F53735",
         "visualClassName": "Visual",
-        "version": "1.0.3",
+        "version": "1.0.7",
         "description": "Custom chart developed to display actual values versus forecasted or target values.",
         "supportUrl": "https://github.com/JesseXia-Rogers/targetChart",
         "gitHubUrl": "https://github.com/JesseXia-Rogers/targetChart"

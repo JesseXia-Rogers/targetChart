@@ -7,8 +7,6 @@ import * as d3 from 'd3';
 import powerbi from 'powerbi-visuals-api';
 import { VisualSettings } from './settings';
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
-import { selection } from 'd3';
-import { groupValues } from 'powerbi-visuals-utils-dataviewutils/lib/dataViewTransform';
 
 // type
 type Selection<T extends d3.BaseType> = d3.Selection<T, any, any, any>;
@@ -61,6 +59,7 @@ export class D3Visual {
         // gets settings
         const LAYOUT_SETTINGS = this._settings.LayoutSettings;
         const BAR_SETTINGS = this._settings.BarSettings;
+        const PATTERN_SETTINGS = this._settings.PatternSettings;
         const X_AXIS_SETTINGS = this._settings.XAxisSettings;
         const Y_AXIS_SETTINGS = this._settings.YAxisSettings;
         const TARGET_SERIES = this._settings.TargetSeries;
@@ -116,12 +115,10 @@ export class D3Visual {
 
         let width = svgSelector.offsetWidth - xPadding;
         let height = svgSelector.offsetHeight - yPadding;
-        // let marginTop = 40;
 
         // adjusts padding to add more space for legend
         if (LEGEND_SETTINGS.LegendPosition == 'bottom' && LEGEND_SETTINGS.LegendToggle) {
             height = this.dimension.height - yPadding;
-            // marginTop = 20;
         }
 
         svg.attr('width', width)
@@ -157,9 +154,7 @@ export class D3Visual {
             g.selectAll('.x-axis-g text')
                 .style('fill', X_AXIS_SETTINGS.FontColor)
                 .style('font-family', X_AXIS_SETTINGS.FontFamily)
-                .style('font-size', X_AXIS_SETTINGS.FontSize);
-
-            g.selectAll('.x-axis-g text')
+                .style('font-size', X_AXIS_SETTINGS.FontSize)
                 .attr('transform', `translate(${X_AXIS_SETTINGS.XOffset}, ${-X_AXIS_SETTINGS.YOffset + height}) rotate(-${X_AXIS_SETTINGS.LabelAngle})`)
                 .style('text-anchor', X_AXIS_SETTINGS.LabelAngle ? 'end' : 'middle');
         }
@@ -251,7 +246,58 @@ export class D3Visual {
         let trueWidth = width + xPadding;
 
         // gets current series
+        // "value series" will always be the second series, and have an index of 1
+        // "target series" will always be the first, and have an index of 0
         let currSeries = idx => idx ? VALUE_SERIES : TARGET_SERIES;
+
+        // pattern fills for bars
+        let patternWidth = 8, patternHeight = 8;
+        let patternRectWidth, patternRectHeight, patternCircRadius;
+        switch (PATTERN_SETTINGS.PatternUnitSize) {
+            case 'small':
+                patternRectWidth = 2;
+                patternRectHeight = 4;
+                patternCircRadius = 1.2;
+                break;
+            case 'large':
+                patternWidth = 12;
+                patternHeight = 12;
+                patternRectWidth = 6;
+                patternRectHeight = 12;
+                patternCircRadius = 4;
+                break;
+            default:
+                patternRectWidth = 4;
+                patternRectHeight = 8;
+                patternCircRadius = 2;
+                break;
+        }
+
+        let stripes = svg.append('defs')
+            .append('pattern')
+            .attr('id', 'stripes')
+            .attr('width', patternWidth)
+            .attr('height', patternHeight)
+            .attr('patternUnits', 'userSpaceOnUse')
+            .attr('patternTransform', 'rotate(60)');
+
+        stripes.append('rect')
+            .attr('width', patternRectWidth)
+            .attr('height', patternRectHeight)
+            .attr('fill', PATTERN_SETTINGS.PatternColor);
+
+        let dots = svg.append('defs')
+            .append('pattern')
+            .attr('id', 'dots')
+            .attr('width', patternWidth)
+            .attr('height', patternHeight)
+            .attr('patternUnits', 'userSpaceOnUse');
+
+        dots.append('circle')
+            .attr('cx', patternWidth / 2)
+            .attr('cy', patternHeight / 2)
+            .attr('r', patternCircRadius)
+            .attr('fill', PATTERN_SETTINGS.PatternColor);
 
         // create legend
         if (LEGEND_SETTINGS.LegendToggle) {
@@ -337,7 +383,18 @@ export class D3Visual {
                 .attr('width', 10)
                 .attr('height', 10)
                 .attr('y', 0)
-                .attr('fill', d => currSeries(dpSeries.indexOf(d.key)).SerieColor);
+                .attr('fill', (_, idx) => {
+                    let fill = VALUE_SERIES.SerieColor;
+                    // if current series == target series
+                    if (!idx) {
+                        if (PATTERN_SETTINGS.PatternToggle) {
+                            fill = PATTERN_SETTINGS.PatternType == 'dots' ? 'url(#dots)' : 'url(#stripes)';
+                        } else {
+                            fill = TARGET_SERIES.SerieColor;
+                        }
+                    }
+                    return fill;
+                });
 
             // adds legend text
             let legendText = legend.append('text')
@@ -379,9 +436,26 @@ export class D3Visual {
 
         let growthBarOn = false;
 
+        // user can select bars to manually adjust height
+        let targetBarsSelected = [];
+        TARGET_SERIES.BarSelect.split(',').forEach(s => targetBarsSelected.push(s.trim()));
+
+        let valueBarsSelected = [];
+        VALUE_SERIES.BarSelect.split(',').forEach(s => valueBarsSelected.push(s.trim()));
+
         // iterate through each serie stack
-        stackData.forEach((serie, idx) => {
-            if (currSeries(idx).ShowSerie) {
+        stackData.forEach((serie, serieIdx) => {
+            if (currSeries(serieIdx).ShowSerie) {
+                // get bar fill
+                let barFill = VALUE_SERIES.SerieColor;
+                // if current series == target series
+                if (!serieIdx) {
+                    if (PATTERN_SETTINGS.PatternToggle) {
+                        barFill = PATTERN_SETTINGS.PatternType == 'dots' ? 'url(#dots)' : 'url(#stripes)';
+                    } else {
+                        barFill = TARGET_SERIES.SerieColor;
+                    }
+                }
 
                 // create bar
                 let bar = svg.selectAll('.bar')
@@ -389,12 +463,12 @@ export class D3Visual {
                     .data(serie)
                     .join('rect')
                     .classed('bar', true)
-                    .attr('fill', idx ? VALUE_SERIES.SerieColor : TARGET_SERIES.SerieColor)
+                    .attr('fill', barFill)
                     .attr('stroke-width', 0)
                     .attr('stroke', BAR_SETTINGS.BarBorderColor)
                     .attr('width', x.bandwidth())
                     .attr('x', data => x(data.data.sharedAxis.toString()))
-                    .attr('serie', dpSeries[idx])
+                    .attr('serie', dpSeries[serieIdx])
                     .attr('xIdx', (_, i) => i);
 
                 // set border line type
@@ -408,10 +482,10 @@ export class D3Visual {
                         bar.attr('stroke-width', BAR_SETTINGS.BarBorderSize);
                         break;
                     case 'first':
-                        bar.attr('stroke-width', !idx ? BAR_SETTINGS.BarBorderSize : 0);
+                        bar.attr('stroke-width', !serieIdx ? BAR_SETTINGS.BarBorderSize : 0);
                         break;
                     case 'second':
-                        bar.attr('stroke-width', idx ? BAR_SETTINGS.BarBorderSize : 0);
+                        bar.attr('stroke-width', serieIdx ? BAR_SETTINGS.BarBorderSize : 0);
                         break;
                     default:
                         break;
@@ -427,9 +501,9 @@ export class D3Visual {
                 yAxisG.call(yAxis)
                     .call(setYAxisGAttr);
 
-                // removes first label
+                // removes 0 label
                 d3.select('.y-axis-g > .tick')
-                    .filter((_, i) => i == 0)
+                    .filter(d => d == 0)
                     .remove();
 
                 // set secondary y axis
@@ -445,12 +519,12 @@ export class D3Visual {
                 // removes border
                 d3.selectAll('.domain').remove();
 
+                // sets x position
                 let setBarX = data => {
-                    if (idx) {
+                    // sets position for value bars
+                    if (serieIdx) {
                         switch (BAR_SETTINGS.BarAlignment) {
                             case 'center':
-                                // return 0;
-                                // console.log(dpSeries[idx])
                                 return x(data.data.sharedAxis.toString()) + x.bandwidth() / 2 - x.bandwidth() * BAR_SETTINGS.BarPadding / 2;
                             case 'left':
                                 return x(data.data.sharedAxis.toString());
@@ -459,19 +533,47 @@ export class D3Visual {
                             default:
                                 break;
                         }
-                    } else {
+                    } 
+                    // sets position for target bars
+                    else {
                         return x(data.data.sharedAxis.toString());
                     }
                 }
 
-                // set bar positions & height
-                bar.data(serie)
-                    .attr('x', data => setBarX(data))
-                    .attr('width', idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth())
-                    // y attr sets starting position from which bar rendered
-                    .attr('y', data => y0(data[1] - data[0]))
-                    // height sets height of rectangle rendered from starting y pos
-                    .attr('height', data => y0(data[0]) - y0(data[1]));
+                let barWidth = serieIdx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth();
+
+                // user has ability to select column(s) and serie(s), and manually adjust the bar height
+                // gets selected bars
+                let barsSelected = [];
+                currSeries(serieIdx).BarSelect.split(',').forEach(s => barsSelected.push(s.trim()));
+
+                // set bar properties
+                bar.attr('x', data => setBarX(data))
+                    .attr('width', barWidth)
+                    .attr('y', height)
+                    .attr('transform', 'rotate(180)')
+                    .attr('transform-origin', data => `${setBarX(data) + barWidth / 2} ${height}`);
+
+                if (barsSelected[0]) { // if column is selected
+                    // calls function for every bar
+                    bar.attr('height', (data, idx) => {
+                        // converts selected bar(s) into an index
+                        let selectedIdx = [];
+                        barsSelected.forEach(b => selectedIdx.push(this.getIndex(b)));
+
+                        // if current bar is one of the selected bars
+                        if (selectedIdx.indexOf(idx) > -1) {
+                            // return adjusted bar height
+                            return y0(data[0]) + TARGET_SERIES.BarHeightAdjustment - y0(data[1]) + VALUE_SERIES.BarHeightAdjustment;
+                        }
+                        // return normal bar height
+                        return y0(data[0]) - y0(data[1]);
+                    });
+
+                } else {
+                    // normal bar height
+                    bar.attr('height', data => y0(data[0]) - y0(data[1]));
+                }
 
                 let hoverBar = function (data) {
                     let selected = d3.select(this);
@@ -559,23 +661,25 @@ export class D3Visual {
 
                 // prevent duplicate growth bars
                 if (VALUE_SERIES.ShowSerie) {
-                    growthBarOn = idx ? true : false;
+                    growthBarOn = serieIdx ? true : false;
                 } else if (TARGET_SERIES.ShowSerie) {
-                    growthBarOn = idx ? false : true;
+                    growthBarOn = serieIdx ? false : true;
                 }
 
-                // draws red/green rectangles as growth indicators
+                // draws red/green rectangles as growth indicators/growth bars
                 if (GROWTH_BAR_SETTINGS.GrowthRectToggle && growthBarOn) {
-
+                    // loop for each column
                     dp.D3Data.forEach((dataset, xId) => {
+                        // gets data for both series
                         let data1 = dataset[dpSeries[0]];
                         let data2 = dataset[dpSeries[1]];
 
+                        // ensures data not 0
                         if (data1 && data2) {
                             // calculates growth value
                             let growthValue = (1 - data1 / data2) * 100;
 
-                            let getXPos = _ => {
+                            let getXPos = () => {
                                 if (GROWTH_BAR_SETTINGS.AlignGrowthRect == 'left') {
                                     return x(dataset.sharedAxis);
                                 } else {
@@ -590,27 +694,118 @@ export class D3Visual {
                                 .attr('fill', growthValue > 0 ? GROWTH_BAR_SETTINGS.PositiveGrowthColor : GROWTH_BAR_SETTINGS.NegativeGrowthColor)
                                 .attr('width', x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth)
                                 .attr('x', getXPos)
-                                .attr('height', Math.abs(y0(data1) - y0(data2)))
-                                .attr('y', growthValue > 0 ? y0(data2) : y0(data1));
+                                .attr('height', _ => {
+                                    let data1Y = y0(data1);
+                                    let data2Y = y0(data2);
+
+                                    // growth bar position needs to be adjusted if bar heights have been manually shifted
+                                    // note that in d3, coordinate grid starts from top left (0, 0), and downwards is positive y
+                                    // x coordinates are still normal
+
+                                    // if target series is selected
+                                    if (TARGET_SERIES.BarSelect) {
+                                        // loop through selected bars
+                                        targetBarsSelected.forEach(barSelected => {
+                                            let targetIdx = this.getIndex(barSelected);
+                                            // if current bar is selected
+                                            if (xId == targetIdx) {
+                                                // adjust height
+                                                data1Y -= TARGET_SERIES.BarHeightAdjustment;
+                                            }
+                                        });
+                                    }
+                                    // same as above
+                                    if (VALUE_SERIES.BarSelect) {
+                                        valueBarsSelected.forEach(barSelected => {
+                                            let valueIdx = this.getIndex(barSelected);
+                                            if (xId == valueIdx) {
+                                                data2Y -= VALUE_SERIES.BarHeightAdjustment;
+                                            }
+                                        });
+                                    }
+
+                                    return Math.abs(data1Y - data2Y);
+                                })
+                                .attr('y', _ => {
+                                    let yPos = y0(data2);
+
+                                    // similar to before, bar y position needs to be adjusted if bar heights have been manually shifted
+
+                                    if (growthValue > 0) {
+                                        if (VALUE_SERIES.BarSelect) {
+                                            // for each selected bar
+                                            valueBarsSelected.forEach(barSelected => {
+                                                let valueIdx = this.getIndex(barSelected);
+                                                // adjust height if current index matches one of the selected bars
+                                                if (xId == valueIdx) {
+                                                    yPos -= VALUE_SERIES.BarHeightAdjustment;
+                                                }
+                                            });
+                                        }
+                                    } else {
+                                        yPos = y0(data1);
+                                    }
+
+                                    // same as above
+                                    if (TARGET_SERIES.BarSelect) {
+                                        targetBarsSelected.forEach(barSelected => {
+                                            let targetIdx = this.getIndex(barSelected);
+                                            if (xId == targetIdx) {
+                                                yPos -= TARGET_SERIES.BarHeightAdjustment;
+                                            }
+                                        });
+                                    }
+
+                                    return yPos;
+                                });
 
                             let val = data1 - data2;
-                            if (GROWTH_LABEL_SETTINGS.FlipSign)
+                            if (GROWTH_LABEL_SETTINGS.FlipSign) {
                                 val *= -1;
+                            }
 
-                            let labelVal = nFormatter(val, GROWTH_LABEL_SETTINGS.DisplayDigits, GROWTH_LABEL_SETTINGS.DisplayUnits)
+                            let labelVal = nFormatter(val, GROWTH_LABEL_SETTINGS.DisplayDigits, GROWTH_LABEL_SETTINGS.DisplayUnits);
 
+                            // displays growth label if label width does not exceed tolerance, and if the label is toggled on
                             if (GROWTH_LABEL_SETTINGS.LabelToggle &&
                                 this.getTextWidth(labelVal, GROWTH_LABEL_SETTINGS) < x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth + GROWTH_LABEL_SETTINGS.LabelDisplayTolerance) {
                                 // add text
                                 svg.append('text')
                                     .attr('width', x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth)
-                                    .attr('x', getXPos(0) + x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth / 2)
+                                    .attr('x', getXPos() + x.bandwidth() * GROWTH_BAR_SETTINGS.GrowthRectWidth / 2)
                                     .attr('y', _ => {
-                                        if (GROWTH_LABEL_SETTINGS.LabelPosition == 'mid') {
-                                            return (growthValue > 0 ? y0(data2) : y0(data1)) + Math.abs(y0(data1) - y0(data2)) / 2;
+                                        let yPos = y0(data2);
+
+                                        // same as before: positioning growth label depending on bar height
+                                        if (growthValue > 0) {
+                                            if (VALUE_SERIES.BarSelect) {
+                                                valueBarsSelected.forEach(barSelected => {
+                                                    let valueIdx = this.getIndex(barSelected);
+                                                    if (xId == valueIdx) {
+                                                        yPos -= VALUE_SERIES.BarHeightAdjustment;
+                                                    }
+                                                });
+                                            }
                                         } else {
-                                            return (growthValue > 0 ? y0(data2) : y0(data1)) - 10;
+                                            yPos = y0(data1);
                                         }
+
+                                        if (TARGET_SERIES.BarSelect) {
+                                            targetBarsSelected.forEach(barSelected => {
+                                                let targetIdx = this.getIndex(barSelected);
+                                                if (xId == targetIdx) {
+                                                    yPos -= TARGET_SERIES.BarHeightAdjustment;
+                                                }
+                                            });
+                                        }
+
+                                        if (GROWTH_LABEL_SETTINGS.LabelPosition == 'mid') {
+                                            yPos += Math.abs(y0(data1) - y0(data2)) / 2;
+
+                                        } else {
+                                            yPos -= 10;
+                                        }
+                                        return yPos;
                                     })
                                     .attr('fill', GROWTH_LABEL_SETTINGS.FontColor)
                                     .attr('font-size', GROWTH_LABEL_SETTINGS.FontSize)
@@ -636,7 +831,7 @@ export class D3Visual {
                 }
 
                 // show text if bar height allows and bar labels are toggled on
-                if (currSeries(idx).BarLabelToggle) {
+                if (currSeries(serieIdx).BarLabelToggle) {
 
                     // create label on each bar
                     let barLabel = svg.selectAll('.label')
@@ -645,7 +840,7 @@ export class D3Visual {
                         .append('text')
                         .attr('width', x.bandwidth())
                         .attr('height', DATA_LABEL_SETTINGS.FontSize)
-                        .attr('fill', idx ? VALUE_SERIES.LabelFontColor : TARGET_SERIES.LabelFontColor)
+                        .attr('fill', serieIdx ? VALUE_SERIES.LabelFontColor : TARGET_SERIES.LabelFontColor) // color varies depending on series
                         .attr('font-size', DATA_LABEL_SETTINGS.FontSize)
                         .attr('font-family', DATA_LABEL_SETTINGS.FontFamily)
                         .attr('text-anchor', 'middle')
@@ -653,23 +848,26 @@ export class D3Visual {
 
                     let getLabelText = data => {
                         // gets data value
-                        let val = data.data[dpSeries[idx]];
-                        if (!val)
+                        let val = data.data[dpSeries[serieIdx]];
+                        if (!val) {
                             return {
                                 value: null,
                                 width: 0
                             }
+                        }
 
                         // gets bar height
-                        let barHeight = y0(data[0]) - y0(data[1]);
+                        let barHeight = y0(data[0]) - y0(data[1]) + currSeries(serieIdx).BarHeightAdjustment;
 
                         // max allowable text width
                         let maxTextWidth = x.bandwidth() / dpSeries.length + DATA_LABEL_SETTINGS.LabelDisplayTolerance;
 
+                        // formats value
                         val = nFormatter(val, displayDigits, displayUnits);
 
                         let textWidth = this.getTextWidth(val, DATA_LABEL_SETTINGS);
 
+                        // if the text doesn't fit, return null
                         if (textWidth > maxTextWidth ||
                             barHeight <= DATA_LABEL_SETTINGS.FontSize) {
                             return {
@@ -686,14 +884,42 @@ export class D3Visual {
 
                     barLabel.text(data => getLabelText(data).value);
 
-                    let labelPos = currSeries(idx).BarLabelPosition;
-
+                    let labelPos = currSeries(serieIdx).BarLabelPosition;
+                    // positions the label
                     if (labelPos == 'mid') {
-                        barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
-                            .attr('y', data => height - (y0(data[0]) - y0(data[1])) / 2);
+                        barLabel.attr('x', data => setBarX(data) + (serieIdx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2) // sets bar x pos
+                            .attr('y', (data, xId) => {
+                                let yPos = y0(data[0]) - y0(data[1]);
+
+                                // bar y pos needs to change if height has been manually set
+
+                                if (VALUE_SERIES.BarSelect && serieIdx) { // if current series == value and bar select not empty
+                                    valueBarsSelected.forEach(barSelected => {
+                                        let valueIdx = this.getIndex(barSelected);
+                                        // adjusts bar height if current bar is a selected bar
+                                        if (xId == valueIdx) {
+                                            yPos += VALUE_SERIES.BarHeightAdjustment;
+                                        }
+                                    });
+                                }
+
+                                // same as above
+                                if (TARGET_SERIES.BarSelect && !serieIdx) { // if current series == target and bar select not empty
+                                    targetBarsSelected.forEach(barSelected => {
+                                        let targetIdx = this.getIndex(barSelected);
+                                        if (xId == targetIdx) {
+                                            yPos += TARGET_SERIES.BarHeightAdjustment;
+                                        }
+                                    });
+                                }
+
+                                // computes y pos of label and vertically centers it
+                                // = height of chart - half y pos 
+                                return height - yPos / 2;
+                            });
 
                     } else if (labelPos == 'top') {
-                        if (currSeries(idx).LabelBgToggle) {
+                        if (currSeries(serieIdx).LabelBgToggle) {
                             // background
                             let bgPadding = 4;
                             svg.selectAll('.labelBg')
@@ -702,22 +928,70 @@ export class D3Visual {
                                 .append('rect')
                                 .attr('width', data => getLabelText(data).width + bgPadding)
                                 .attr('height', DATA_LABEL_SETTINGS.FontSize + bgPadding / 2)
-                                .attr('fill', currSeries(idx).LabelBackgroundColor)
-                                .attr('y', data => y0(data[1] - data[0]) - 18)
-                                .attr('x', data => setBarX(data) + x.bandwidth() / 4);
+                                .attr('fill', currSeries(serieIdx).LabelBackgroundColor)
+                                .attr('y', (data, xId) => {
+                                    let yPos = y0(data[1] - data[0]) - 18;
+
+                                    // same as above
+
+                                    if (VALUE_SERIES.BarSelect) {
+                                        valueBarsSelected.forEach(barSelected => {
+                                            let valueIdx = this.getIndex(barSelected);
+                                            if (xId == valueIdx) {
+                                                yPos -= VALUE_SERIES.BarHeightAdjustment;
+                                            }
+                                        });
+                                    }
+
+                                    if (TARGET_SERIES.BarSelect) {
+                                        targetBarsSelected.forEach(barSelected => {
+                                            let targetIdx = this.getIndex(barSelected);
+                                            if (xId == targetIdx) {
+                                                yPos -= TARGET_SERIES.BarHeightAdjustment;
+                                            }
+                                        });
+                                    }
+
+                                    return yPos;
+                                })
+                                .attr('x', data => setBarX(data) + setBarX(data) / 2);
                         }
 
                         // set text and xy pos
-                        barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
-                            .attr('y', data => y0(data[1] - data[0]) - 10);
+                        barLabel.attr('x', data => setBarX(data) + (serieIdx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                            .attr('y', (data, xId) => {
+                                let yPos = y0(data[1] - data[0]) - 10;
+
+                                // same as above
+
+                                if (VALUE_SERIES.BarSelect && serieIdx) {
+                                    valueBarsSelected.forEach(barSelected => {
+                                        let valueIdx = this.getIndex(barSelected);
+                                        if (xId == valueIdx) {
+                                            yPos -= VALUE_SERIES.BarHeightAdjustment;
+                                        }
+                                    });
+                                }
+
+                                if (TARGET_SERIES.BarSelect && !serieIdx) {
+                                    targetBarsSelected.forEach(barSelected => {
+                                        let targetIdx = this.getIndex(barSelected);
+                                        if (xId == targetIdx) {
+                                            yPos -= TARGET_SERIES.BarHeightAdjustment;
+                                        }
+                                    });
+                                }
+
+                                return yPos;
+                            });
 
                         // bring to front
                         barLabel.each(function () {
                             this.parentNode.appendChild(this);
                         });
-                        
+
                     } else {
-                        barLabel.attr('x', data => setBarX(data) + (idx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
+                        barLabel.attr('x', data => setBarX(data) + (serieIdx ? x.bandwidth() * BAR_SETTINGS.BarPadding : x.bandwidth()) / 2)
                             .attr('y', height - 15);
                     }
                 }
@@ -737,31 +1011,24 @@ export class D3Visual {
 
         // threshold
         if (LINE_SETTINGS.LineToggle) {
-            let thresholdValue: number = dp.LineValues.reduce((a, b) => a + b, 0);
-            svg.selectAll('.lineValues')
-                .data([dp.LineValues[0]])
-                .enter()
-                .append('line')
+            // converts values from LineValues into coordinate points
+            let lineValueArray = [];
+            dp.LineValues.forEach(data => lineValueArray.push([
+                x(data.sharedAxis.toString()),
+                LINE_SETTINGS.LineAlign ? y1(data.value) : y0(data.value)
+            ]));
+
+            // draws line
+            svg.append('path')
+                .datum(lineValueArray)
                 .classed('lineValues', true)
                 .attr('fill', 'none')
                 .attr('stroke', LINE_SETTINGS.LineColor)
                 .attr('stroke-width', LINE_SETTINGS.LineThickness)
-                .attr('x1', 0)
-                .attr('x2', width)
-
-            // sets axis to align to
-            if (LINE_SETTINGS.LineAlign) {
-                // align secondary y-axis
-                svg.selectAll('.lineValues')
-                    .attr('y1', y1(thresholdValue) - LINE_SETTINGS.LineOffsetHeight)
-                    .attr('y2', y1(thresholdValue) - LINE_SETTINGS.LineOffsetHeight);
-
-            } else {
-                // align primary y-axis
-                svg.selectAll('.lineValues')
-                    .attr('y1', y0(thresholdValue) - LINE_SETTINGS.LineOffsetHeight)
-                    .attr('y2', y0(thresholdValue) - LINE_SETTINGS.LineOffsetHeight);
-            }
+                .attr('d', d3.line()
+                    .x(data => data[0] + x.bandwidth() / 2)
+                    .y(data => data[1] - LINE_SETTINGS.LineOffsetHeight)
+                );
 
             // sets line type
             if (LINE_SETTINGS.LineType == 'dashed') {
@@ -780,6 +1047,17 @@ export class D3Visual {
                         // initializes coordinate points based on bars selected
                         let growth1Y = y0(data1) - heightOffset;
                         let growth2Y = y0(data2) - heightOffset;
+
+                        if (valueBarsSelected.indexOf(col2.sharedAxis) > -1) {
+                            growth2Y -= VALUE_SERIES.BarHeightAdjustment;
+                        }
+
+                        if (valueBarsSelected.indexOf(col1.sharedAxis) > -1 && setting == 'SECONDARY') {
+                            growth1Y -= VALUE_SERIES.BarHeightAdjustment;
+                        } else if (targetBarsSelected.indexOf(col1.sharedAxis) > -1) {
+                            growth1Y -= TARGET_SERIES.BarHeightAdjustment;
+                        }
+
                         let growth1X, growth2X;
                         if (setting == 'SECONDARY') {
                             growth1X = x(col1.sharedAxis.toString()) + x.bandwidth() / 4;
@@ -816,7 +1094,13 @@ export class D3Visual {
                             [growth2X, yPos],
                             [growth2X, growth2Y]]);
 
-                        this.drawLine(path, 'growthLine', eval(setting + '_LINE_SETTINGS'));
+                        this.drawLine(path, 'growthLineValues', eval(setting + '_LINE_SETTINGS'));
+
+                        // sets line type
+                        if (eval(setting + '_LINE_SETTINGS').LineType == 'dashed') {
+                            svg.selectAll('.growthLineValues')
+                                .attr('stroke-dasharray', '5,4');
+                        }
 
                         // calculate label text
                         let growthValue;
@@ -873,11 +1157,21 @@ export class D3Visual {
                         this.container.innerHTML = 'Unable to create ' + setting.toLowerCase() + ' growth labels';
                     }
 
-                } else {
+                } else if (eval(setting + '_GROWTH_SETTINGS').DisplayLabel == 'side') {
                     try {
                         // initializes coordinate points based on bars selected
                         let growth1Y = y0(data1);
                         let growth2Y = y0(data2);
+
+                        if (valueBarsSelected.indexOf(col2.sharedAxis) > -1) {
+                            growth2Y -= VALUE_SERIES.BarHeightAdjustment;
+                        }
+
+                        if (valueBarsSelected.indexOf(col1.sharedAxis) > -1 && setting == 'SECONDARY') {
+                            growth1Y -= VALUE_SERIES.BarHeightAdjustment;
+                        } else if (targetBarsSelected.indexOf(col1.sharedAxis) > -1) {
+                            growth1Y -= TARGET_SERIES.BarHeightAdjustment;
+                        }
 
                         let averageY = (growth2Y + growth1Y) / 2;
 
@@ -894,8 +1188,8 @@ export class D3Visual {
 
                         if (eval(setting + '_GROWTH_SETTINGS').DisplaySide == 'right') {
                             // adds offset to account for bar width
-                            growth1X += x.bandwidth() / dpSeries.length;
-                            growth2X += x.bandwidth() / dpSeries.length;
+                            growth1X += x.bandwidth();
+                            growth2X += x.bandwidth() * BAR_SETTINGS.BarPadding;
 
                             // gets desired x position
                             xPos = Math.max(growth2X, growth1X) + eval(setting + '_GROWTH_SETTINGS').LabelXOffset;
@@ -1109,7 +1403,7 @@ export class D3Visual {
 
         // sanity check
         if (selectedIdx == -1) {
-            this.parent.innerHTML = 'Growth Selector not correct';
+            this.parent.innerHTML = 'Invalid selector';
             return selectedIdx;
         }
 

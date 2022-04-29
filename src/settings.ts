@@ -34,6 +34,7 @@ export class VisualSettings extends DataViewObjectsParser {
     public YAxisSettings: YAxisSettings = new YAxisSettings();
     public DataLabelSettings: DataLabelSettings = new DataLabelSettings();
     public LayoutSettings: LayoutSettings = new LayoutSettings();
+    public PatternSettings: PatternSettings = new PatternSettings();
     public BarSettings: BarSettings = new BarSettings();
     public GrowthBarSettings: GrowthBarSettings = new GrowthBarSettings();
     public GrowthLabelSettings: GrowthLabelSettings = new GrowthLabelSettings();
@@ -51,6 +52,7 @@ export class VisualSettings extends DataViewObjectsParser {
 }
 
 // initializes default values for all settings
+// setting names here must correspond to capabilities.json, which defines all user-adjustable settings
 
 export class LayoutSettings {
     public ChartXMargin: number = 85;
@@ -61,14 +63,22 @@ export class LayoutSettings {
     public YScaleFactor: number = 1.3;
 }
 
+// pattern fill for target bars
+export class PatternSettings {
+    public PatternToggle: boolean = false;
+    public PatternColor: string = '#D9D9D9';
+    public PatternType: string = 'stripes';
+    public PatternUnitSize: string = 'medium';
+}
+
 export class BarSettings {
     public BarAlignment: string = 'center';
     public BarPadding: number = 0.7;
 
-    public DisplayBarBorder: string = 'none';
+    public DisplayBarBorder: string = 'first';
     public BarBorderSize: number = 2;
-    public BarBorderColor: string = '#666666';
-    public BarBorderLineType: string = 'dashed';
+    public BarBorderColor: string = '#B3B3B3';
+    public BarBorderLineType: string = 'solid';
 
     public FlipSeries: boolean = false;
 }
@@ -130,25 +140,34 @@ export class DataColors {
 }
 
 export class TargetSeries {
+    public SerieColor: string = '#ffffff';
+
+    public ShowSerie: boolean = true;
+    public BarLabelToggle: boolean = true;
+    public LabelBgToggle: boolean = false;
+    public LabelFontColor: string = '#000000';
+    public LabelBackgroundColor: string = '#ffffff';
+
+    public BarLabelPosition: string = 'top';
+
+    public BarSelect: string = '';
+    public BarHeightAdjustment: number = 0;
+}
+
+export class ValueSeries {
     public SerieColor: string = '#B3B3B3';
 
     public ShowSerie: boolean = true;
     public BarLabelToggle: boolean = true;
-    public LabelBgToggle: boolean = false;
-    public LabelFontColor: string = '#000000';
-    public LabelBackgroundColor: string = '#ffffff';
-    public BarLabelPosition: string = 'top';
-}
 
-export class ValueSeries {
-    public SerieColor: string = '#333333';
-
-    public ShowSerie: boolean = true;
-    public BarLabelToggle: boolean = true;
     public LabelFontColor: string = '#000000';
     public LabelBgToggle: boolean = false;
     public LabelBackgroundColor: string = '#ffffff';
+
     public BarLabelPosition: string = 'top';
+    
+    public BarSelect: string = '';
+    public BarHeightAdjustment: number = 0;
 }
 
 export class DataLabelSettings {
@@ -172,11 +191,11 @@ export class LegendSettings {
 }
 
 export class GrowthBarSettings {        
-    public GrowthRectToggle: boolean = false;
+    public GrowthRectToggle: boolean = true;
     public PositiveGrowthColor: string = '#2dcc4d';
     public NegativeGrowthColor: string = '#e31426';
     public AlignGrowthRect: string = 'left';
-    public GrowthRectWidth: number = 0.7;
+    public GrowthRectWidth: number = 0.2;
 }
 
 export class GrowthLabelSettings {
@@ -232,7 +251,7 @@ export class PrimaryLineSettings {
     public LineColor: string = '#808080';
     public LineOffsetHeight: number = 25;
     public LineSize: number = 1;
-    public LineType: string = 'dashed';
+    public LineType: string = 'solid';
 
     public ArrowSize: number = 20;
     public DisplayArrow: string = 'both';
